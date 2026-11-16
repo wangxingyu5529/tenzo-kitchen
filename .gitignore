@@ -1,0 +1,11 @@
+# secrets / local config
+.env
+.env.*
+*.pem
+*.key
+secrets*
+# OS / editor
+.DS_Store
+.vscode/
+*.swp
+node_modules/

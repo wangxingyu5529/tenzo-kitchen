@@ -1,0 +1,2720 @@
+<title>Tenzo Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a kitchen board. Recipe shelf on the left, a ruled grid of six days × four meals on the right; lists and prep sheets below as plain working documents. */
+:root{
+  --bg:#EDEFEA; --surface:#FAFBF8; --ink:#1C221F; --muted:#59625C; --line:#D3D8D0; --line-strong:#B9C0B6;
+  --accent:#2F4C7A; --accent-ink:#FFFFFF; --accent-soft:#DDE5F1;
+  --good:#3B6843; --good-soft:#DFEBDD; --warn:#8A500E; --warn-soft:#F3E6D2; --danger:#9A2E2E;
+  --off:#E3E5E0; --off-ink:#8B928C;
+  --f-display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",Georgia,serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141715; --surface:#1C201E; --ink:#E4E8E2; --muted:#9AA39C; --line:#2C322E; --line-strong:#434B45;
+  --accent:#93ABD6; --accent-ink:#121826; --accent-soft:#233149;
+  --good:#8DBF94; --good-soft:#1F3122; --warn:#E2AA62; --warn-soft:#3A2B17; --danger:#E08A8A;
+  --off:#191C1A; --off-ink:#6A726C; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#141715; --surface:#1C201E; --ink:#E4E8E2; --muted:#9AA39C; --line:#2C322E; --line-strong:#434B45;
+  --accent:#93ABD6; --accent-ink:#121826; --accent-soft:#233149;
+  --good:#8DBF94; --good-soft:#1F3122; --warn:#E2AA62; --warn-soft:#3A2B17; --danger:#E08A8A;
+  --off:#191C1A; --off-ink:#6A726C; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 48px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;line-height:1.2}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1440px;margin:0 auto}
+
+/* Header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:-16px;padding-inline:16px}
+.top-in{max-width:1440px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 24px;padding-block:14px 0}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0;padding-bottom:10px}
+.brand h1{font-size:26px;font-weight:800;letter-spacing:.01em}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 12px 11px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.sync{font-size:12px;color:var(--muted);padding-bottom:12px;white-space:nowrap}
+.sync::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--line-strong);margin-right:6px;vertical-align:1px}
+.sync.ok::before{background:var(--good)}
+.sync.local::before{background:var(--warn)}
+
+main{padding-top:20px}
+section[role="tabpanel"]{display:flex;flex-direction:column;gap:18px}
+
+/* Generic controls */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--r);padding:7px 12px;cursor:pointer;font-size:14px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{border-color:transparent;background:none;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);border-color:var(--line)}
+.btn.danger.armed{background:var(--danger);border-color:var(--danger);color:var(--surface)}
+.btn:disabled{opacity:.5;cursor:default}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);letter-spacing:.03em;text-transform:uppercase;font-weight:500}
+.field input,.field select,.field textarea{text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink)}
+input[type="text"],input[type="number"],input[type="date"],input[type="search"],input:not([type]),select,textarea{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);padding:6px 9px;min-width:0}
+input:disabled,select:disabled{background:var(--off);color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.toolbar .spacer{flex:1}
+.note{color:var(--muted);font-size:13px;margin:0}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.qty{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:14px}
+
+/* Plan */
+.settings{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.settings .field input{width:110px}
+.settings .field input[type="date"]{width:160px}
+.settings .summary{flex:1;min-width:200px;font-size:13px;color:var(--muted);text-align:right}
+.plan-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px;align-items:start}
+.plan-layout.readonly{grid-template-columns:minmax(0,1fr)}
+.shelf{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 100px)}
+.shelf h2{font-size:17px}
+.meal-filter{display:flex;flex-wrap:wrap;gap:4px}
+.meal-filter button{border:1px solid var(--line);background:none;border-radius:99px;padding:2px 10px;font-size:12px;cursor:pointer;color:var(--muted)}
+.meal-filter button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.shelf-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;overflow-y:auto;min-height:60px}
+.shelf-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:7px 10px;cursor:grab;display:flex;flex-direction:column;gap:1px;user-select:none}
+.shelf-item:hover{border-color:var(--line-strong)}
+.shelf-item .nm{font-weight:500;line-height:1.3}
+.shelf-item .mt{font-size:12px;color:var(--muted)}
+
+.board-wrap{overflow-x:auto;min-width:0;padding-bottom:4px}
+.board{display:grid;grid-template-columns:78px repeat(2,minmax(118px,.75fr)) repeat(6,minmax(148px,1fr));min-width:1220px;border-top:1px solid var(--line-strong);border-left:1px solid var(--line)}
+.board > div{border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.bh{padding:8px 10px;background:var(--surface);display:flex;flex-direction:column;gap:0}
+.bh b{font-family:var(--f-display);font-size:17px;font-weight:800}
+.bh span{font-size:12px;color:var(--muted)}
+.meal-label{padding:10px 8px;background:var(--surface);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center}
+.slot{padding:6px;display:flex;flex-direction:column;gap:6px;background:var(--bg);min-height:118px}
+.slot.off{background:var(--off)}
+.slot-top{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12px;color:var(--muted)}
+.sw{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.sw input{margin:0;accent-color:var(--accent)}
+.hc{display:inline-flex;align-items:center;gap:3px}
+.hc input{width:52px;padding:2px 5px;font-size:12px;font-family:var(--f-mono);text-align:right}
+.hc input.set{border-color:var(--accent);color:var(--accent);font-weight:500}
+.slot-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1;min-height:44px;border-radius:4px}
+.slot.off .slot-list{opacity:.55}
+.shelf-item:hover .nm,.chip[data-rid]:not(.missing):hover .nm{text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:2px}
+.bh.pre b{color:var(--muted)}
+.slot.na{background:repeating-linear-gradient(135deg,var(--off) 0 6px,var(--bg) 6px 12px);min-height:0}
+.slot.ma-cell{background:var(--surface);min-height:84px}
+.meal-label.ma-label{color:var(--accent);background:var(--accent-soft)}
+.board > div.ma-row{border-bottom:2px solid var(--line-strong)}
+.chip.ma-chip{flex-direction:column;align-items:stretch;gap:1px;position:relative;padding-right:22px;border-left-color:var(--good);border-left-style:double;border-left-width:4px}
+.chip.ma-chip .x{position:absolute;top:3px;right:2px}
+.chip.ma-chip .ma-amt{font-family:var(--f-mono);font-size:11.5px;color:var(--ink)}
+.chip.ma-chip .ma-cov{font-size:11.5px;color:var(--muted)}
+.chip.ma-chip .ma-warn{font-size:11.5px;color:var(--warn)}
+.chip.ma-chip.warn{border-left-color:var(--warn)}
+.chip.ma-chip.idle{opacity:.7}
+.tag-ma{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--good);border:1px solid currentColor;border-radius:3px;padding:0 4px;line-height:1.5;vertical-align:1px}
+.shelf-item[data-kind="ma"]{border-left:4px double var(--good)}
+.ma-warnings{background:var(--warn-soft);border-radius:var(--r);padding:9px 12px;font-size:13px;margin:0;display:flex;flex-direction:column;gap:3px}
+.ma-warnings b{font-weight:700}
+.aw{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.aw-head{display:flex;flex-wrap:wrap;gap:10px 20px;justify-content:space-between;align-items:flex-end}
+.aw-head h2{font-size:21px}
+.aw-head .note{max-width:64ch}
+.aw-days{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.aw-days input{width:64px}
+.aw .table-wrap{border:0;border-radius:0}
+.aw table.pantry{min-width:820px}
+.aw table.pantry td.per{width:190px}
+.aw table.pantry td:first-child{min-width:170px}
+.aw table.pantry .total{font-family:var(--f-mono);font-size:13px;white-space:nowrap}
+.aw-sugg{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.aw-sugg button{border:1px dashed var(--line-strong);background:none;border-radius:99px;padding:2px 10px;font-size:12px;cursor:pointer;color:var(--ink)}
+.aw-sugg button:hover{border-style:solid;border-color:var(--accent)}
+.aw-list{margin:0;padding:0;list-style:none;columns:2 300px;column-gap:24px;font-size:13.5px}
+.aw-list li{padding:3px 0;border-bottom:1px dotted var(--line);break-inside:avoid;display:flex;justify-content:space-between;gap:10px}
+.aw-list .qty{white-space:nowrap}
+.chip,.slot-list .shelf-item{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;padding:4px 4px 4px 7px;font-size:13px;line-height:1.3;display:flex;align-items:flex-start;gap:4px;cursor:grab}
+.chip .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.chip.missing{border-left-color:var(--danger);color:var(--muted);font-style:italic}
+.chip .x{border:0;background:none;color:var(--muted);cursor:pointer;padding:0 4px;font-size:15px;line-height:1}
+.chip .x:hover{color:var(--danger)}
+.ro .chip{cursor:default}
+.sortable-ghost{opacity:.35}
+.sortable-drag{box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.empty-slot{font-size:12px;color:var(--off-ink);padding:4px 2px}
+
+/* Recipes */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h3{font-size:18px}
+.card .meta{font-size:13px;color:var(--muted)}
+.card .used{font-size:12px;font-family:var(--f-mono);color:var(--accent)}
+.card .ings{font-size:13px;color:var(--muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.card .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+.empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--r);padding:28px 20px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.empty h3{font-size:19px}
+
+/* Pantry */
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table.pantry{border-collapse:collapse;width:100%;min-width:760px}
+table.pantry th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;padding:10px 8px;border-bottom:1px solid var(--line-strong)}
+table.pantry td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.pantry tr.sec td{background:var(--bg);font-family:var(--f-display);font-weight:600;font-size:14px;padding-top:10px}
+table.pantry input,table.pantry select{width:100%;padding:4px 7px}
+table.pantry td.q{width:90px}
+table.pantry td.u{width:110px}
+table.pantry .need{font-size:12px;color:var(--muted);white-space:nowrap}
+table.pantry .who{font-size:12px;color:var(--muted);white-space:nowrap}
+.addrow{display:grid;grid-template-columns:minmax(160px,2fr) 90px 110px minmax(150px,1.3fr) minmax(120px,1.3fr) auto;gap:8px;align-items:end;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+@media (max-width:760px){.addrow{grid-template-columns:1fr 1fr}.addrow .grow{grid-column:1/-1}}
+
+/* Grocery */
+.g-head{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.g-head h2{font-size:28px;font-weight:800}
+.g-stats{font-size:14px;color:var(--muted);margin:4px 0 0}
+.g-warn{background:var(--warn-soft);color:var(--ink);border-radius:var(--r);padding:9px 12px;font-size:13px}
+.g-grid{columns:2 440px;column-gap:28px}
+.g-sec{break-inside:avoid-column;margin-bottom:22px}
+.g-sec h3{font-size:18px;border-bottom:1.5px solid var(--ink);padding-bottom:4px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:baseline}
+.g-sec h3 small{font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:400}
+.g-list{list-style:none;margin:0;padding:0}
+.gl{display:grid;grid-template-columns:18px minmax(0,1fr);gap:10px;padding:7px 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.gl input{margin:3px 0 0;width:15px;height:15px;accent-color:var(--good)}
+.gl-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.gl-item{font-weight:700}
+.gl-qty{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;font-weight:500}
+.gl-uses{font-size:12.5px;color:var(--muted);line-height:1.45}
+.gl-uses .code{font-family:var(--f-mono);font-size:11.5px;color:var(--accent)}
+.gl-pantry{font-size:12px;color:var(--good);margin-top:1px}
+.gl-aka{font-size:12px;color:var(--muted);font-style:italic}
+.merge{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:0 14px}
+.merge summary{cursor:pointer;padding:10px 0;font-weight:500}
+.merge-body{display:flex;flex-direction:column;gap:12px;padding-bottom:14px}
+.merge-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.merge-list li{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.merge-chip{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line-strong);border-radius:99px;padding:1px 4px 1px 10px;font-size:13px}
+.merge-chip .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px}
+.merge-chip .x:hover{color:var(--danger)}
+.merge-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.merge-form .field input{width:200px}
+.merge-sugg{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.merge-sugg-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.merge-sugg ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.merge-sugg li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dotted var(--line);font-size:14px}
+.merge-sugg li.maybe{color:var(--muted)}
+.merge-acts{display:flex;gap:6px;flex:none}
+.tag-maybe{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid currentColor;border-radius:3px;padding:0 3px}
+.gl-pantry.check{color:var(--warn)}
+.gl.covered .gl-item,.gl.covered .gl-qty{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+.gl.done .gl-item{text-decoration:line-through}
+.legend{font-size:12px;color:var(--muted)}
+.legend .code{font-family:var(--f-mono);color:var(--accent)}
+
+/* Prep */
+.menu-table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table.menu{border-collapse:collapse;width:100%;min-width:820px;font-size:13px}
+table.menu th,table.menu td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+table.menu th{font-family:var(--f-display);font-size:15px;background:var(--bg)}
+table.menu th small{display:block;font-family:var(--f-body);font-weight:400;font-size:11px;color:var(--muted)}
+table.menu td.ml{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;width:80px}
+table.menu td.off{background:var(--off);color:var(--off-ink)}
+table.menu .hcn{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.prep-day{display:flex;flex-direction:column;gap:12px;padding-top:6px}
+.prep-day > h2{font-size:24px;font-weight:800;border-bottom:1.5px solid var(--ink);padding-bottom:4px}
+.prep-meal h3{font-size:17px;margin-bottom:6px}
+.prep-meal h3 .hcn{font-family:var(--f-mono);font-size:13px;color:var(--muted);font-weight:400}
+.prep-recipes{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.prep-r{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;min-width:0}
+.prep-r h4{margin:0 0 2px;font-size:15px}
+.prep-r .scale{font-size:12px;color:var(--muted);margin-bottom:6px}
+.prep-r ul{margin:0 0 8px;padding:0;list-style:none;font-size:13.5px}
+.prep-r li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;padding:2px 0;border-bottom:1px dotted var(--line)}
+.prep-r .steps{white-space:pre-wrap;font-size:13px;color:var(--ink);margin:0}
+.prep-r.prep-ma{border-left:4px double var(--good)}
+.prep-r.prep-ma.warn{border-left-color:var(--warn)}
+.prep-r .ma-w{color:var(--warn)}
+.ps{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.ps-head{display:flex;flex-wrap:wrap;gap:10px 20px;justify-content:space-between;align-items:flex-end}
+.ps-head h2{font-size:22px}
+.ps-head .note{max-width:62ch}
+.ps-status{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.ps-day{display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid var(--line)}
+.ps-day h3{font-size:17px}
+.ps-day h3 span{font-family:var(--f-body);font-size:13px;font-weight:400;color:var(--muted)}
+.ps-wins{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.ps-win{background:var(--bg);border-radius:4px;padding:8px 10px;min-width:0}
+.ps-win.empty{opacity:.55}
+.ps-win h4{margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.ps-win h4 span{font-family:var(--f-mono);letter-spacing:0;text-transform:none;font-weight:400}
+.ps-win ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ps-win li{font-size:13.5px;line-height:1.4}
+.ps-win li .for{font-family:var(--f-mono);font-size:11.5px;color:var(--accent);white-space:nowrap}
+.ps-win li .min{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.ps-win li{display:flex;flex-direction:column;gap:1px;padding-bottom:5px;border-bottom:1px dotted var(--line)}
+.ps-win li .tmeta{font-size:12px;color:var(--muted)}
+.ps-win li .tag-main{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);border:1px solid currentColor;border-radius:3px;padding:0 3px}
+.ps-win li{position:relative}
+.ps-win li.drag{cursor:grab;padding-right:20px}
+.ps-win li.main .tk{font-weight:500}
+.ps-win li .x{position:absolute;top:0;right:0;border:0;background:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:2px 3px}
+.ps-win li .x:hover{color:var(--danger)}
+.ps-win{display:flex;flex-direction:column}
+.ps-list{min-height:56px;flex:1;width:100%;align-self:stretch}
+.ps-add{margin-top:4px;border:1px dashed var(--line-strong);background:none;border-radius:4px;padding:3px 8px;font-size:12px;color:var(--muted);cursor:pointer;width:100%;text-align:left}
+.ps-add:hover{color:var(--ink);border-color:var(--accent)}
+.ps-addform{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+.ps-addform input{width:100%;font-size:13px;padding:4px 7px}
+.ps-addform .row{display:flex;gap:5px;align-items:center}
+.ps-addform .row input{width:70px;flex:none}
+.ps-addform .btn{padding:4px 10px;font-size:13px}
+.ps-notes{margin:0;padding-left:18px;font-size:13px;color:var(--muted)}
+@media (max-width:1000px){.ps-wins{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.ps-wins{grid-template-columns:minmax(0,1fr)}}
+
+/* Dialogs */
+dialog{border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);padding:0;width:min(920px,calc(100vw - 24px));max-height:calc(100vh - 32px)}
+dialog::backdrop{background:rgba(10,14,12,.45)}
+.dlg{display:flex;flex-direction:column;max-height:calc(100vh - 34px)}
+.dlg-head{padding:16px 20px 10px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
+.dlg-head h2{font-size:21px}
+.dlg-body{padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.dlg-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
+.dlg-foot .msg{flex:1;font-size:13px;color:var(--danger)}
+.r-top{display:flex;flex-wrap:wrap;gap:10px}
+.r-top > .field{flex:0 1 130px;min-width:0}
+.r-top > .field.grow{flex:1 1 220px}
+.r-top .pair{display:flex;gap:6px}
+.r-top .pair input{min-width:0}
+.r-top .pair input:first-child{width:64px;flex:none}
+.r-top .pair input:last-child{width:90px;flex:1}
+.r-top > .field[data-for="makeahead"]:first-of-type{flex-basis:170px}
+.kind-row{display:flex;flex-wrap:wrap;gap:8px}
+.kind-opt{flex:1 1 220px;display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line-strong);border-radius:var(--r);padding:8px 10px;cursor:pointer;font-size:13px;color:var(--muted)}
+.kind-opt b{display:block;color:var(--ink);font-size:14px}
+.kind-opt input{margin-top:3px;accent-color:var(--accent)}
+.kind-opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.ing-row.is-ma .i-item{border-color:var(--good);background:var(--good-soft);font-weight:500}
+.review{background:var(--warn-soft);border-radius:var(--r);padding:8px 12px;font-size:13px}
+.ing-head,.ing-row{display:grid;grid-template-columns:70px 92px minmax(120px,1.6fr) minmax(120px,1fr) minmax(90px,1fr) 28px;gap:6px;align-items:center}
+.ing-head{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.ing-row input,.ing-row select{padding:5px 7px;font-size:14px;width:100%}
+.ing-row .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:18px}
+.ing-row .x:hover{color:var(--danger)}
+.ings{display:flex;flex-direction:column;gap:6px}
+.ings-wrap{overflow-x:auto}
+.ings-wrap > div{min-width:620px;display:flex;flex-direction:column;gap:6px}
+textarea{width:100%;resize:vertical}
+.imp-tabs{display:flex;gap:6px}
+.imp-tabs button{border:1px solid var(--line);background:none;border-radius:99px;padding:4px 14px;cursor:pointer}
+.imp-tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.drop{border:1.5px dashed var(--line-strong);border-radius:var(--r);padding:22px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px}
+.thumbs img{width:92px;height:92px;object-fit:cover;border-radius:4px;border:1px solid var(--line)}
+.thumb{position:relative}
+.thumb-x{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.thumb-x:hover{border-color:var(--danger);color:var(--danger)}
+.thumbs{padding-top:7px}
+.thumbs .file-chip{height:92px;min-width:92px;max-width:180px;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);font-size:12px;display:flex;flex-direction:column;justify-content:center;gap:2px;overflow-wrap:anywhere}
+.thumbs .file-chip b{font-family:var(--f-mono);font-size:11px;color:var(--accent)}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.imp-note{background:var(--warn-soft);border-radius:var(--r);padding:8px 12px;font-size:13px;margin:0}
+.thinking{font-size:13px;color:var(--muted);font-family:var(--f-mono);white-space:pre-wrap;max-height:120px;overflow:auto}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:var(--r);font-size:14px;z-index:50;max-width:calc(100vw - 32px)}
+
+@media (max-width:900px){
+  .plan-layout{grid-template-columns:minmax(0,1fr)}
+  .shelf{position:static;max-height:none}
+  .shelf-list{max-height:220px}
+  .settings .summary{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media print{
+  .top,.toolbar,.settings,.shelf,.no-print,.toast{display:none!important}
+  body{background:#fff;color:#000}
+  section[role="tabpanel"][hidden]{display:none!important}
+}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <h1>Tenzo Kitchen</h1>
+      <p id="retreatLine">Tuesday dinner through Sunday lunch</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" id="tab-btn-plan" data-tab="plan" aria-selected="true">Meal plan</button>
+      <button role="tab" id="tab-btn-recipes" data-tab="recipes" aria-selected="false">Recipes</button>
+      <button role="tab" id="tab-btn-pantry" data-tab="pantry" aria-selected="false">Pantry</button>
+      <button role="tab" id="tab-btn-grocery" data-tab="grocery" aria-selected="false">Grocery list</button>
+      <button role="tab" id="tab-btn-prep" data-tab="prep" aria-selected="false">Menu &amp; prep</button>
+    </nav>
+    <span class="sync" id="sync">Connecting…</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section role="tabpanel" id="tab-plan"></section>
+  <section role="tabpanel" id="tab-recipes" hidden></section>
+  <section role="tabpanel" id="tab-pantry" hidden></section>
+  <section role="tabpanel" id="tab-grocery" hidden></section>
+  <section role="tabpanel" id="tab-prep" hidden></section>
+</main>
+
+<datalist id="unitList"></datalist>
+<datalist id="itemList"></datalist>
+
+<dialog id="recipeDlg" aria-labelledby="recipeDlgTitle">
+  <form class="dlg" id="recipeForm" novalidate>
+    <div class="dlg-head"><h2 id="recipeDlgTitle">New recipe</h2><button type="button" class="btn ghost" data-close>Close</button></div>
+    <div class="dlg-body">
+      <div class="review" id="rReview" hidden>Read by Claude from your photo or text. Check the amounts against the original before saving.</div>
+      <div class="kind-row" role="radiogroup" aria-label="Kind of recipe">
+        <label class="kind-opt"><input type="radio" name="rKind" id="rKindDish" value="dish" checked><span><b>Dish</b>Served at a meal</span></label>
+        <label class="kind-opt"><input type="radio" name="rKind" id="rKindMa" value="makeahead"><span><b>Make-ahead</b>A stock, paste or sauce made in batches and used by dishes</span></label>
+      </div>
+      <div class="r-top">
+        <label class="field grow">Recipe name<input id="rName" type="text" required placeholder="Miso soup with tofu"></label>
+        <label class="field" data-for="dish">Serves<input id="rYields" type="number" min="1" step="1" placeholder="8"></label>
+        <label class="field" data-for="dish">Usually for<select id="rMeal"><option value="">Any meal</option><option value="breakfast">Breakfast</option><option value="lunch">Lunch</option><option value="dinner">Dinner</option><option value="snack">Treat</option></select></label>
+        <div class="field" data-for="makeahead" hidden><span>One batch makes</span><div class="pair"><input id="rMakesQty" type="text" placeholder="8" aria-label="Amount one batch makes"><input id="rMakesUnit" type="text" list="unitList" placeholder="cup" aria-label="Unit"></div></div>
+        <label class="field" data-for="makeahead" hidden>Keeps for (days)<input id="rKeeps" type="number" min="1" step="1" placeholder="3"></label>
+        <label class="field grow">Source<input id="rSource" type="text" placeholder="Book, person, website"></label>
+      </div>
+      <div class="ings-wrap"><div>
+        <div class="ing-head"><span>Qty</span><span>Unit</span><span>Ingredient</span><span>Store section</span><span>Note</span><span></span></div>
+        <div class="ings" id="rIngs"></div>
+      </div></div>
+      <div class="toolbar"><button type="button" class="btn" id="rAddIng">Add ingredient</button><p class="note" id="rMaLegend" hidden>Green ingredients are make-aheads. Their own ingredients go on the grocery list, and the make-ahead row in the plan decides when they're made.</p></div>
+      <label class="field">Method<textarea id="rSteps" rows="6" placeholder="1. Soak the kombu…"></textarea></label>
+    </div>
+    <div class="dlg-foot"><span class="msg" id="rMsg"></span><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary" id="rSave">Save recipe</button></div>
+  </form>
+</dialog>
+
+<dialog id="importDlg" aria-labelledby="importDlgTitle">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="importDlgTitle">Import a recipe</h2><button type="button" class="btn ghost" data-close>Close</button></div>
+    <div class="dlg-body">
+      <div class="imp-tabs" id="impTabs">
+        <button type="button" id="impModePhoto" data-mode="photo" aria-pressed="true">From photos or PDF</button>
+        <button type="button" id="impModeWeb" data-mode="web" aria-pressed="false">From a website</button>
+        <button type="button" id="impModeText" data-mode="text" aria-pressed="false">From text</button>
+      </div>
+      <div id="impPhoto">
+        <div class="drop" id="impDrop">
+          <strong>Add photos or a PDF of the recipe</strong>
+          <span class="note">Choose files, drop them here, or paste a screenshot. Add several photos if the recipe runs over more than one page.</span>
+          <button type="button" class="btn" id="impPick">Choose files</button>
+          <input type="file" id="impFiles" class="vh" tabindex="-1" aria-hidden="true" accept="image/*,.heic,.heif,application/pdf,.pdf" multiple>
+        </div>
+        <p class="note" id="impOcrNote" hidden>Photos are read on this device, then sent to Claude as text. Printed recipes in sharp, straight-on photos work best. Handwriting often comes out garbled.</p>
+        <div class="thumbs" id="impThumbs"></div>
+      </div>
+      <div id="impWeb" hidden>
+        <ol class="note" style="margin:0 0 10px;padding-left:18px">
+          <li>Open the recipe page in another tab.</li>
+          <li>Select everything on it (⌘A or Ctrl+A) and copy it (⌘C or Ctrl+C).</li>
+          <li>Paste it below. Ads, stories and comments are fine; Claude picks out the recipe.</li>
+        </ol>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label class="field">Web address (saved as the source)<input type="text" id="impUrl" placeholder="https://…" inputmode="url"></label>
+          <label class="field">Page contents<textarea id="impWebArea" rows="9" placeholder="Paste the whole page here."></textarea></label>
+        </div>
+      </div>
+      <div id="impText" hidden>
+        <label class="field">Recipe text<textarea id="impTextArea" rows="10" placeholder="Paste the recipe here: title, servings, ingredients and method."></textarea></label>
+      </div>
+      <p class="note">Claude reads the recipe, converts amounts to US units and sorts each ingredient into a store section. You review it before it's saved. This uses your own Claude account.</p>
+      <div class="thinking" id="impStatus" hidden></div>
+    </div>
+    <div class="dlg-foot"><span class="msg" id="impMsg"></span><button type="button" class="btn ghost" id="impStop" hidden>Stop</button><button type="button" class="btn primary" id="impGo">Read recipe</button></div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script id="logic">
+/* ===== LOGIC START (pure functions: units, scaling, aggregation) ===== */
+const DAYS = [{k:'tue',l:'Tue',full:'Tuesday'},{k:'wed',l:'Wed',full:'Wednesday'},{k:'thu',l:'Thu',full:'Thursday'},{k:'fri',l:'Fri',full:'Friday'},{k:'sat',l:'Sat',full:'Saturday'},{k:'sun',l:'Sun',full:'Sunday'}];
+const MEALS = [{k:'breakfast',l:'Breakfast',c:'B'},{k:'lunch',l:'Lunch',c:'L'},{k:'dinner',l:'Dinner',c:'D'},{k:'snack',l:'Treat',c:'T'}];
+// Days a make-ahead batch can be made on: the two days before the retreat, then the retreat days
+const BATCH_DAYS = [{k:'sunBefore', l:'Sun', tag:'Sun before', full:'Sunday, two days before', di:-2}, {k:'monBefore', l:'Mon', tag:'Mon before', full:'Monday, the day before', di:-1}]
+  .concat(DAYS.map((d, i) => ({k:d.k, l:d.l, tag:d.l, full:d.full, di:i})));
+// Coffee, milk, fruit and the like: an amount per person per day, or a total for the whole retreat
+function alwaysFactor(plan, it){ return it.per === 'total' ? 1 : (Number(plan.participants) || 0) * (Number(plan.always && plan.always.days) || 0); }
+// Order of meals within a day. A batch made on a day is ready from that day's lunch (time 0.5).
+const MEAL_TIME = {breakfast:0, lunch:1, snack:2, dinner:3};
+const SECTIONS = ['Produce','Grains & Dry Goods','Legumes','Tofu & Dairy','Spices & Seasonings','Oils & Condiments','Baking & Sweets','Canned & Jarred','Frozen','Other'];
+
+function defaultEnabled(d, m){ if (d === 'tue') return m === 'dinner'; if (d === 'sun') return m === 'breakfast' || m === 'lunch'; return true; }
+function defaultPlan(){
+  const slots = {};
+  for (const d of DAYS) for (const m of MEALS) slots[d.k + '-' + m.k] = {enabled: defaultEnabled(d.k, m.k), headcount: null, recipeIds: []};
+  return {startDate: '', participants: 20, bufferPct: 10, slots, batches: Object.fromEntries(BATCH_DAYS.map(b => [b.k, []])), always: {days: 5, items: []}};
+}
+function numOr(v, dflt){ const n = Number(v); return v === '' || v == null || !isFinite(n) ? dflt : n; }
+function normPlan(p){
+  const d = defaultPlan();
+  if (!p) return d;
+  const o = JSON.parse(JSON.stringify(p));
+  const out = {startDate: o.startDate || '', participants: numOr(o.participants, d.participants), bufferPct: numOr(o.bufferPct, d.bufferPct), slots: {}};
+  for (const k in d.slots){
+    const s = o.slots && o.slots[k];
+    out.slots[k] = s ? {
+      enabled: s.enabled !== false,
+      headcount: s.headcount === null || s.headcount === undefined || s.headcount === '' ? null : numOr(s.headcount, null),
+      recipeIds: Array.isArray(s.recipeIds) ? s.recipeIds.map(String) : []
+    } : d.slots[k];
+  }
+  out.batches = {};
+  for (const b of BATCH_DAYS){ const v = o.batches && o.batches[b.k]; out.batches[b.k] = Array.isArray(v) ? v.map(String) : []; }
+  const aw = o.always || {};
+  out.always = {days: numOr(aw.days, d.always.days), items: (Array.isArray(aw.items) ? aw.items : []).filter(i => i && i.item).map(i => ({
+    id: String(i.id || ''), item: String(i.item), qty: i.qty == null ? null : Number(i.qty), unit: String(i.unit || ''), per: i.per === 'total' ? 'total' : 'person-day',
+    section: SECTIONS.includes(i.section) ? i.section : 'Other', note: String(i.note || '')}))};
+  return out;
+}
+function slotHeadcount(plan, slot){ return slot.headcount == null ? Number(plan.participants) || 0 : Number(slot.headcount) || 0; }
+
+// ---- units ----
+const VOL = {tsp:1, tbsp:3, 'fl oz':6, cup:48, pint:96, quart:192, gallon:768, ml:0.2028841, l:202.8841, pinch:0.0625, dash:0.125};
+const WT = {oz:1, lb:16, g:0.03527396, kg:35.27396};
+const UNIT_ALIASES = {
+  teaspoon:'tsp', teaspoons:'tsp', tsps:'tsp', tsp:'tsp',
+  tablespoon:'tbsp', tablespoons:'tbsp', tbs:'tbsp', tbl:'tbsp', tbsp:'tbsp', tbsps:'tbsp', tblsp:'tbsp',
+  'fluid ounce':'fl oz', 'fluid ounces':'fl oz', 'fl oz':'fl oz', 'fl. oz':'fl oz', 'floz':'fl oz', 'fl':'fl oz',
+  cup:'cup', cups:'cup', c:'cup',
+  pint:'pint', pints:'pint', pt:'pint', pts:'pint',
+  quart:'quart', quarts:'quart', qt:'quart', qts:'quart',
+  gallon:'gallon', gallons:'gallon', gal:'gallon', gals:'gallon',
+  ml:'ml', milliliter:'ml', milliliters:'ml', millilitre:'ml', millilitres:'ml',
+  l:'l', liter:'l', liters:'l', litre:'l', litres:'l',
+  oz:'oz', ounce:'oz', ounces:'oz',
+  lb:'lb', lbs:'lb', pound:'lb', pounds:'lb', '#':'lb',
+  g:'g', gr:'g', gram:'g', grams:'g', gm:'g',
+  kg:'kg', kilo:'kg', kilos:'kg', kilogram:'kg', kilograms:'kg',
+  '':'each', each:'each', ea:'each', whole:'each', x:'each', count:'each', medium:'each', large:'each', small:'each',
+  clove:'clove', cloves:'clove', can:'can', cans:'can', tin:'can', tins:'can',
+  bunch:'bunch', bunches:'bunch', head:'head', heads:'head', block:'block', blocks:'block',
+  package:'package', packages:'package', pkg:'package', pkgs:'package', pack:'package', packs:'package',
+  pinch:'pinch', pinches:'pinch', dash:'dash', dashes:'dash', slice:'slice', slices:'slice',
+  sprig:'sprig', sprigs:'sprig', stalk:'stalk', stalks:'stalk', piece:'piece', pieces:'piece', pc:'piece', pcs:'piece',
+  jar:'jar', jars:'jar', sheet:'sheet', sheets:'sheet', bag:'bag', bags:'bag', bottle:'bottle', bottles:'bottle',
+  handful:'handful', handfuls:'handful', leaf:'leaf', leaves:'leaf', stick:'stick', sticks:'stick', box:'box', boxes:'box'
+};
+const UNIT_OPTIONS = ['tsp','tbsp','cup','fl oz','pint','quart','gallon','oz','lb','each','clove','can','bunch','head','block','package','pinch','slice','sprig','stalk','piece','jar','sheet','bag','g','kg','ml','l'];
+const UNIT_PLURALS = {bunch:'bunches', pinch:'pinches', dash:'dashes', leaf:'leaves', box:'boxes'};
+
+function normUnit(u){
+  if (u == null) return 'each';
+  let s = String(u).trim();
+  if (s === 'T' || s === 'Tb' || s === 'TB') return 'tbsp';
+  if (s === 't') return 'tsp';
+  s = s.toLowerCase().replace(/\.$/, '').replace(/\s+/g, ' ');
+  if (s in UNIT_ALIASES) return UNIT_ALIASES[s];
+  if (s.endsWith('s') && s.slice(0, -1) in UNIT_ALIASES) return UNIT_ALIASES[s.slice(0, -1)];
+  return s;
+}
+function unitPlural(u, n){
+  if (n <= 1 + 1e-9) return u;
+  return UNIT_PLURALS[u] || (u + 's');
+}
+
+const UF = {'½':.5,'⅓':1/3,'⅔':2/3,'¼':.25,'¾':.75,'⅛':.125,'⅜':.375,'⅝':.625,'⅞':.875,'⅕':.2,'⅖':.4,'⅗':.6,'⅘':.8,'⅙':1/6,'⅚':5/6};
+function parseQty(v){
+  if (v == null) return null;
+  if (typeof v === 'number') return isFinite(v) && v > 0 ? v : null;
+  let s = String(v).trim();
+  if (!s) return null;
+  s = s.replace(/(\d)\s*([½⅓⅔¼¾⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚])/g, '$1 $2');
+  const parts = s.split(/\s*(?:–|—|-|\bto\b)\s*/).filter(Boolean);
+  if (parts.length > 1) s = parts[parts.length - 1];
+  let total = 0, any = false;
+  for (const tok of s.split(/\s+/)){
+    if (UF[tok] != null){ total += UF[tok]; any = true; continue; }
+    const m = tok.match(/^(\d+)\/(\d+)$/);
+    if (m){ if (+m[2]) { total += m[1] / m[2]; any = true; } continue; }
+    const n = parseFloat(tok.replace(',', '.'));
+    if (!isNaN(n)){ total += n; any = true; }
+  }
+  return any && total > 0 ? total : null;
+}
+
+// Fractions a cook reads at a glance
+const FR = [[0,''],[1/8,'⅛'],[1/4,'¼'],[1/3,'⅓'],[1/2,'½'],[2/3,'⅔'],[3/4,'¾'],[1,'']];
+function fmtNum(x, mode){
+  mode = mode || 'near';
+  if (!(x > 0)) return '0';
+  if (x >= 50) return String(mode === 'up' ? Math.ceil(x - 1e-9) : Math.round(x));
+  if (x >= 10){
+    const h = mode === 'up' ? Math.ceil(x * 2 - 1e-9) / 2 : Math.round(x * 2) / 2;
+    return Math.floor(h) + (h % 1 ? '½' : '');
+  }
+  const w = Math.floor(x), f = x - w;
+  const fr = w >= 1 ? FR.filter(([v]) => v !== 1/8) : FR; // "1⅛ lb" is not how anyone shops
+  let best;
+  if (mode === 'up') best = fr.find(([v]) => v >= f - 1e-6);
+  else best = fr.reduce((a, b) => Math.abs(b[0] - f) < Math.abs(a[0] - f) ? b : a);
+  let whole = w, s = best[1];
+  if (best[0] === 1){ whole += 1; s = ''; }
+  if (whole === 0 && !s) return '⅛';
+  return (whole ? String(whole) : '') + s;
+}
+function qtyToText(q){
+  if (q == null || q === '') return '';
+  const w = Math.floor(q), f = q - w;
+  const hit = FR.find(([v]) => Math.abs(v - f) < 0.01);
+  if (hit){ const whole = hit[0] === 1 ? w + 1 : w; return (whole ? whole + (hit[1] ? ' ' : '') : '') + hit[1] || String(whole); }
+  return String(+q.toFixed(3));
+}
+function fmtVol(tsp, mode){
+  if (tsp < 3 - 1e-9) return fmtNum(tsp, mode) + ' tsp';
+  if (tsp < 12 - 1e-9) return fmtNum(tsp / 3, mode) + ' tbsp';
+  if (tsp <= 768 + 1e-9){ const c = tsp / 48; const s = fmtNum(c, mode); return s + (s === '1' || c < 1 ? ' cup' : ' cups'); }
+  return fmtNum(tsp / 768, mode) + ' gal';
+}
+function fmtWt(oz, mode){
+  if (oz >= 4){
+    const r = mode === 'up' ? Math.ceil(oz - 1e-9) : Math.round(oz);
+    if (r < 16) return r + ' oz';
+  } else return fmtNum(oz, mode) + ' oz';
+  return fmtNum(oz / 16, mode) + ' lb';
+}
+function fmtCount(n, u, mode){
+  const v = mode === 'up' ? Math.ceil(n - 1e-9) : n;
+  const s = mode === 'up' ? String(v) : fmtNum(v, 'near');
+  return u === 'each' ? s : s + ' ' + unitPlural(u, v);
+}
+const EPS = 1e-4;
+function isZeroAmt(a){ return a.vol <= 0.01 && a.wt <= 0.01 && Object.values(a.counts).every(n => n <= 0.01); }
+function fmtAmount(a, mode){
+  const parts = [];
+  if (a.wt > 0.01) parts.push(fmtWt(a.wt, mode));
+  if (a.vol > 0.01) parts.push(fmtVol(a.vol, mode));
+  for (const [u, n] of Object.entries(a.counts)) if (n > 0.01) parts.push(fmtCount(n, u, mode));
+  return parts.join(' + ');
+}
+// One ingredient line in its own unit family, for prep sheets
+function fmtIngredient(qty, unit, mode){
+  if (qty == null) return '';
+  const u = normUnit(unit);
+  if (VOL[u]) return fmtVol(qty * VOL[u], mode);
+  if (WT[u]) return fmtWt(qty * WT[u], mode);
+  return fmtCount(qty, u, mode);
+}
+
+// ---- items ----
+const KEEP_PLURAL = new Set(['oats','grits','greens','hummus','couscous','asparagus','molasses','swiss chard','brussels sprouts','peas']);
+const IGNORE_ITEMS = new Set(['water','cold water','hot water','boiling water','warm water','ice','ice water','tap water','filtered water']);
+function singularWord(w){
+  if (w.length < 4) return w;
+  if (/(ss|us|is)$/.test(w)) return w;
+  if (/leaves$/.test(w)) return w.replace(/leaves$/, 'leaf');
+  if (/[^aeiou]ies$/.test(w)) return w.slice(0, -3) + 'y';
+  if (/(tomato|potato|mango)es$/.test(w)) return w.slice(0, -2);
+  if (/(ch|sh|x|z)es$/.test(w)) return w.slice(0, -2);
+  if (/s$/.test(w)) return w.slice(0, -1);
+  return w;
+}
+function normItem(s){
+  const t = String(s || '').toLowerCase().replace(/[.,;:]+$/, '').replace(/\s+/g, ' ').trim();
+  if (!t) return '';
+  if (KEEP_PLURAL.has(t)) return t;
+  const words = t.split(' ');
+  const last = words.pop();
+  if (KEEP_PLURAL.has(last)) return t;
+  words.push(singularWord(last));
+  return words.join(' ');
+}
+// Names that mean the same thing to buy ("fresh ginger" → "ginger"), set by the tenzo
+function canonItem(name, aliases){
+  let c = normItem(name), hops = 0;
+  while (aliases && aliases[c] && aliases[c] !== c && hops++ < 6) c = aliases[c];
+  return c;
+}
+function displayItem(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+// Grams per US cup for bulk staples, so volume totals can be bought by weight
+const DENS = {
+  'rice':185,'white rice':185,'jasmine rice':185,'basmati rice':185,'sushi rice':200,'short-grain rice':200,'short grain rice':200,'brown rice':190,'wild rice':160,'sweet rice':200,'glutinous rice':200,
+  'flour':125,'all-purpose flour':125,'all purpose flour':125,'bread flour':127,'whole wheat flour':120,'rice flour':158,'almond flour':96,'buckwheat flour':120,'cornstarch':128,
+  'sugar':200,'granulated sugar':200,'cane sugar':200,'brown sugar':213,'powdered sugar':120,'coconut sugar':150,
+  'oats':90,'rolled oats':90,'old-fashioned oats':90,'steel-cut oats':160,'steel cut oats':160,
+  'quinoa':170,'millet':200,'barley':200,'pearl barley':200,'buckwheat':170,'buckwheat groat':170,'cornmeal':150,'polenta':160,'couscous':175,'bulgur':140,
+  'lentil':190,'red lentil':190,'green lentil':190,'brown lentil':190,'french lentil':190,'split pea':200,'dried chickpea':200,'dried soybean':186,'soybean':186,"job's tear":190,'blueberry':148,'dried black bean':185,'dried bean':185,'dried adzuki bean':200,'dried mung bean':200,
+  'miso':275,'white miso':275,'red miso':275,'yellow miso':275,'tahini':240,'peanut butter':258,'almond butter':250,'butter':227,'honey':340,'maple syrup':315,
+  'walnut':100,'almond':143,'cashew':130,'pecan':100,'peanut':145,'sesame seed':144,'pumpkin seed':130,'sunflower seed':140,
+  'raisin':150,'dried cranberry':120,'cocoa powder':85,'chocolate chip':170,'panko':60,'breadcrumb':110,'nutritional yeast':60,'shredded coconut':80,'coconut flake':80
+};
+function densityFor(item){
+  if (DENS[item]) return DENS[item];
+  let best = null;
+  for (const k in DENS) if (item.endsWith(' ' + k) && (!best || k.length > best.length)) best = k;
+  return best ? DENS[best] : null;
+}
+const OZ_PER_TSP_PER_GCUP = 0.03527396 / 48;
+
+function emptyAmt(){ return {vol:0, wt:0, counts:{}}; }
+function addToAmt(a, qty, unit){
+  const u = normUnit(unit);
+  if (VOL[u]) a.vol += qty * VOL[u];
+  else if (WT[u]) a.wt += qty * WT[u];
+  else a.counts[u] = (a.counts[u] || 0) + qty;
+}
+function volToWeight(a, item){
+  const d = densityFor(item);
+  if (!d || a.vol <= 0) return false;
+  a.wt += a.vol * d * OZ_PER_TSP_PER_GCUP;
+  a.vol = 0;
+  return true;
+}
+
+// ---- make-aheads (stocks, pastes, sauces made in batches and used by dishes) ----
+function isMakeAhead(r){ return !!r && r.kind === 'makeahead'; }
+function makeAheadIndex(recipesById){
+  const byName = new Map();
+  for (const r of recipesById.values()) if (isMakeAhead(r) && r.name) byName.set(normItem(r.name), r);
+  return byName;
+}
+function resolveMakeAhead(ing, recipesById, maByName){
+  if (ing.prepId){ const r = recipesById.get(ing.prepId); if (isMakeAhead(r)) return r; }
+  return maByName.get(normItem(ing.item)) || null;
+}
+function toBase(qty, unit){
+  const u = normUnit(unit);
+  if (VOL[u]) return {dim:'vol', v:qty * VOL[u]};
+  if (WT[u]) return {dim:'wt', v:qty * WT[u]};
+  return {dim:'count:' + u, v:qty};
+}
+function makesBase(r){ const q = parseQty(r.makes && r.makes.qty); return q ? toBase(q, r.makes.unit) : null; }
+function fmtBase(b, mode){
+  if (!b) return '';
+  if (b.dim === 'vol') return fmtVol(b.v, mode);
+  if (b.dim === 'wt') return fmtWt(b.v, mode);
+  return fmtCount(b.v, b.dim.slice(6), mode);
+}
+function dimWord(b){ return b.dim === 'vol' ? 'volume (cups, tbsp…)' : b.dim === 'wt' ? 'weight (lb, oz…)' : '"' + b.dim.slice(6) + '"'; }
+
+/** Work out every make-ahead batch: which meals it feeds, how much to make, and what's wrong with the schedule. */
+function planMakeAheads(plan, recipesById){
+  const maByName = makeAheadIndex(recipesById);
+  const uses = new Map(), warnings = [], assign = new Map();
+  const addUse = (ma, u) => { if (!uses.has(ma.id)) uses.set(ma.id, []); uses.get(ma.id).push(u); };
+  DAYS.forEach((d, di) => {
+    for (const m of MEALS){
+      const key = d.k + '-' + m.k, slot = plan.slots[key];
+      if (!slot || !slot.enabled) continue;
+      const hc = slotHeadcount(plan, slot);
+      if (!hc) continue;
+      for (const rid of slot.recipeIds){
+        const r = recipesById.get(rid);
+        if (!r || isMakeAhead(r)) continue;
+        const f = hc / (Number(r.yields) || 1);
+        (r.ingredients || []).forEach((ing, ii) => {
+          const ma = resolveMakeAhead(ing, recipesById, maByName);
+          if (!ma || ma.id === r.id) return;
+          const q = parseQty(ing.qty);
+          if (q == null) return;
+          addUse(ma, {t: di * 4 + MEAL_TIME[m.k], di, code: d.l + '-' + m.c, base: toBase(q * f, ing.unit), by: r.name || 'Untitled', key: key + '|' + rid + '|' + ii});
+        });
+      }
+    }
+  });
+  const placed = new Map();
+  for (const bd of BATCH_DAYS) for (const rid of (plan.batches && plan.batches[bd.k]) || []){
+    if (!isMakeAhead(recipesById.get(rid))) continue;
+    if (!placed.has(rid)) placed.set(rid, []);
+    if (!placed.get(rid).includes(bd)) placed.get(rid).push(bd);
+  }
+  // Handle a make-ahead only after everything that uses it, so nested ones (mushroom paste using dashi) add up
+  const mas = [...recipesById.values()].filter(isMakeAhead);
+  const deps = new Map(mas.map(m => [m.id, new Set()])), indeg = new Map(mas.map(m => [m.id, 0]));
+  for (const m of mas) for (const ing of m.ingredients || []){
+    const n = resolveMakeAhead(ing, recipesById, maByName);
+    if (n && n.id !== m.id && !deps.get(m.id).has(n.id)){ deps.get(m.id).add(n.id); indeg.set(n.id, indeg.get(n.id) + 1); }
+  }
+  const queue = mas.filter(m => indeg.get(m.id) === 0), order = [];
+  while (queue.length){
+    const m = queue.shift(); order.push(m);
+    for (const nid of deps.get(m.id)){ indeg.set(nid, indeg.get(nid) - 1); if (indeg.get(nid) === 0) queue.push(recipesById.get(nid)); }
+  }
+  if (order.length < mas.length) warnings.push('These make-aheads use each other in a loop, so their amounts are left out: ' + mas.filter(m => !order.includes(m)).map(m => m.name).join(', ') + '.');
+  const batches = [];
+  for (const ma of order){
+    const us = (uses.get(ma.id) || []).sort((a, b) => a.t - b.t);
+    const mb = makesBase(ma);
+    const newBatch = bd => ({ma, bd, di: bd ? bd.di : null, t: bd ? bd.di * 4 + 0.5 : null, need: null, covers: [], by: new Set(), warnings: [], factor: 0});
+    const bs = (placed.get(ma.id) || []).map(newBatch).sort((a, b) => a.t - b.t);
+    let orphan = null;
+    for (const u of us){
+      let b = null;
+      for (const x of bs) if (x.t <= u.t) b = x;
+      if (!b){ if (!orphan){ orphan = newBatch(null); orphan.t = u.t - 0.25; orphan.di = u.di; } b = orphan; }
+      if (mb && u.base.dim !== mb.dim){ warnings.push(`${u.by} (${u.code}) measures ${ma.name} by ${dimWord(u.base)}, but one batch of ${ma.name} is measured by ${dimWord(mb)}. Use the same kind of unit in both recipes.`); continue; }
+      if (b.need && b.need.dim !== u.base.dim){ warnings.push(`${u.by} (${u.code}) measures ${ma.name} in a different kind of unit from other dishes, so that amount was left out.`); continue; }
+      b.need = b.need ? {dim: b.need.dim, v: b.need.v + u.base.v} : {dim: u.base.dim, v: u.base.v};
+      if (!b.covers.includes(u.code)) b.covers.push(u.code);
+      b.by.add(u.by);
+      assign.set(u.key, b);
+      const age = b.bd ? u.di - b.di : 0;
+      if (b.bd && Number(ma.keepsDays) > 0 && age > Number(ma.keepsDays)) b.warnings.push(`${u.code} is ${age} days after this batch, but ${ma.name} keeps ${ma.keepsDays} ${Number(ma.keepsDays) === 1 ? 'day' : 'days'}`);
+    }
+    if (orphan){
+      warnings.push(`${ma.name} is needed at ${orphan.covers.join(', ')}, but no batch is scheduled before ${orphan.covers.length > 1 ? 'those meals' : 'that meal'}. Drag ${ma.name} onto the make-ahead row. Its ingredients are on the grocery list either way.`);
+      bs.push(orphan);
+    }
+    for (const b of bs){
+      if (b.need && !mb){ b.warnings.push(`set how much one batch of ${ma.name} makes`); }
+      b.factor = b.need && mb ? b.need.v / mb.v : 0;
+      if (b.bd) for (const w of b.warnings) warnings.push(`${ma.name}, ${b.bd.tag} batch: ${w}.`);
+      if (b.factor > 0) (ma.ingredients || []).forEach((ing, ii) => {
+        const n = resolveMakeAhead(ing, recipesById, maByName);
+        if (!n || n.id === ma.id) return;
+        const q = parseQty(ing.qty);
+        if (q == null) return;
+        addUse(n, {t: b.t, di: b.di, code: (b.bd ? b.bd.tag : 'unscheduled') + ' ' + ma.name, base: toBase(q * b.factor, ing.unit), by: ma.name, key: 'batch|' + ma.id + '|' + (b.bd ? b.bd.k : 'none') + '|' + ii});
+      });
+      batches.push(b);
+    }
+  }
+  return {batches, warnings, assign, maByName};
+}
+
+/** Scale every planned recipe to its meal's headcount, add the buffer, sum per ingredient, subtract the pantry. */
+function scaleAndAggregate(plan, recipesById, pantryList, aliases){
+  const buf = 1 + (Number(plan.bufferPct) || 0) / 100;
+  const map = new Map();
+  const stats = {meals:0, recipeUses:0, emptyMeals:[], overrides:0, missing:0, misplaced:[]};
+  const ma = planMakeAheads(plan, recipesById);
+  const addItem = (ing, factor, useName, code) => {
+    const item = canonItem(ing.item, aliases);
+    if (!item || IGNORE_ITEMS.has(item)) return;
+    let e = map.get(item);
+    if (!e){ e = {item, sectionVotes:{}, total:emptyAmt(), asNeeded:false, uses:new Map(), aka:new Set()}; map.set(item, e); }
+    const raw = normItem(ing.item);
+    if (raw !== item) e.aka.add(raw);
+    const sec = SECTIONS.includes(ing.section) ? ing.section : 'Other';
+    e.sectionVotes[sec] = (e.sectionVotes[sec] || 0) + 1;
+    if (!e.uses.has(useName)) e.uses.set(useName, []);
+    const codes = e.uses.get(useName);
+    if (!codes.includes(code)) codes.push(code);
+    const q = parseQty(ing.qty);
+    if (q == null){ e.asNeeded = true; return; }
+    addToAmt(e.total, q * factor * buf, ing.unit);
+  };
+  for (const d of DAYS) for (const m of MEALS){
+    const slot = plan.slots[d.k + '-' + m.k];
+    if (!slot || !slot.enabled) continue;
+    const code = d.l + '-' + m.c;
+    const hc = slotHeadcount(plan, slot);
+    stats.meals++;
+    if (slot.headcount != null) stats.overrides++;
+    const rs = slot.recipeIds.map(id => recipesById.get(id)).filter(Boolean);
+    stats.missing += slot.recipeIds.length - rs.length;
+    if (!rs.length){ stats.emptyMeals.push(code); continue; }
+    if (!hc) continue;
+    for (const r of rs){
+      if (isMakeAhead(r)){ stats.misplaced.push(`${r.name} (${code})`); continue; }
+      stats.recipeUses++;
+      const factor = hc / (Number(r.yields) || 1);
+      // make-ahead ingredients (dashi) are bought through their batches, below
+      for (const ing of r.ingredients || []) if (!resolveMakeAhead(ing, recipesById, ma.maByName)) addItem(ing, factor, r.name || 'Untitled', code);
+    }
+  }
+  for (const b of ma.batches){
+    if (!(b.factor > 0)) continue;
+    for (const ing of b.ma.ingredients || []){
+      if (resolveMakeAhead(ing, recipesById, ma.maByName)) continue;
+      addItem(ing, b.factor, b.ma.name + ' · make-ahead', b.bd ? 'made ' + b.bd.tag : 'not scheduled yet');
+    }
+  }
+  for (const it of (plan.always && plan.always.items) || []){
+    // a total for the whole retreat is already deliberate, so it skips the buffer
+    const f = it.per === 'total' ? 1 / buf : alwaysFactor(plan, it);
+    if (f > 0) addItem(it, f, 'Always available', it.per === 'total' ? 'whole retreat' : 'all retreat');
+  }
+  // Pantry, keyed by the same normalized item name
+  const have = new Map();
+  for (const p of pantryList || []){
+    const item = canonItem(p.item, aliases);
+    if (!item) continue;
+    let h = have.get(item);
+    if (!h){ h = {amt:emptyAmt(), any:false, section:p.section}; have.set(item, h); }
+    h.any = true;
+    const q = parseQty(p.qty);
+    if (q != null) addToAmt(h.amt, q, p.unit);
+  }
+  const entries = [];
+  for (const e of map.values()){
+    const volBefore = e.total.vol;
+    const hadWt = e.total.wt > 0;
+    e.byWeight = volToWeight(e.total, e.item);
+    e.volNote = e.byWeight && !hadWt ? volBefore : 0;
+    const secs = Object.entries(e.sectionVotes).sort((a, b) => b[1] - a[1]);
+    e.section = secs.length ? secs[0][0] : 'Other';
+    const h = have.get(e.item);
+    e.need = JSON.parse(JSON.stringify(e.total));
+    e.have = null; e.unmatched = false; e.covered = false;
+    if (h){
+      const ha = JSON.parse(JSON.stringify(h.amt));
+      volToWeight(ha, e.item);
+      e.have = ha;
+      e.need.vol = Math.max(0, e.total.vol - ha.vol);
+      e.need.wt = Math.max(0, e.total.wt - ha.wt);
+      for (const u in e.total.counts) e.need.counts[u] = Math.max(0, e.total.counts[u] - (ha.counts[u] || 0));
+      e.unmatched = (ha.vol > 0.01 && e.total.vol <= 0.01) || (ha.wt > 0.01 && e.total.wt <= 0.01) ||
+        Object.keys(ha.counts).some(u => ha.counts[u] > 0.01 && !(u in e.total.counts));
+      e.covered = isZeroAmt(e.need) && (!e.unmatched || isZeroAmt(e.total));
+    }
+    e.uses = [...e.uses.entries()].map(([name, codes]) => ({name, codes}));
+    e.aka = [...e.aka].sort();
+    entries.push(e);
+  }
+  const sections = SECTIONS.map(name => ({name, entries: entries.filter(e => e.section === name).sort((a, b) => a.item.localeCompare(b.item))})).filter(s => s.entries.length);
+  return {sections, entries, stats, ma};
+}
+// ---- prep schedule placement ----
+// Each prep window as a rough clock time, and when each kind of job is due
+const PREP_WINDOW_KEYS = ['before_breakfast', 'after_breakfast', 'afternoon', 'after_dinner'];
+const WINDOW_HOUR = [6, 9.5, 14.5, 20];
+const SERVE_HOUR = {breakfast:7.5, lunch:12, snack:13, dinner:18, batch:12};
+function serveAbs(job){ return job.di * 24 + SERVE_HOUR[job.serve]; }
+/**
+ * Put every task into a day and prep window. Each task says how many hours before serving it may happen
+ * (ahead.min = as late as possible, ahead.max = as early as freshness allows, ahead.best = preferred).
+ * A task never lands after a task that needs it, and long waits (an overnight soak) must finish before the next step starts.
+ * `needs` lists the earlier tasks a task depends on; when a dish gives no `needs` at all, its steps are treated as one after another.
+ * Windows over `cap` hands-on minutes push flexible tasks elsewhere.
+ */
+function placePrepTasks(jobs, tasksByHash, opts){
+  const cap = (opts && opts.cap) || 150, firstDay = (opts && opts.firstDay != null) ? opts.firstDay : -2;
+  const wins = [];
+  for (let di = firstDay; di <= 5; di++) for (let w = 0; w < 4; w++) wins.push({di, w, abs: di * 24 + WINDOW_HOUR[w]});
+  const load = new Map(), out = [];
+  const n = (v, d) => { const x = Number(v); return isFinite(x) ? x : d; };
+  for (const job of jobs.slice().sort((a, b) => serveAbs(a) - serveAbs(b))){
+    const tasks = tasksByHash[job.hash] || [];
+    const sAbs = serveAbs(job);
+    const sequential = !tasks.some(t => Array.isArray(t.needs));
+    const deps = tasks.map((t, i) => sequential ? (i > 0 ? [i - 1] : []) : (t.needs || []).filter(k => k >= 0 && k < i));
+    const at = new Array(tasks.length);
+    const placed = [];
+    for (let i = tasks.length - 1; i >= 0; i--){
+      const t = tasks[i], a = t.ahead || {};
+      // finish before anything that needs this task; a long wait (beyond what fits in one window) pushes it earlier
+      const lag = Math.max(0, (t.wait || 0) / 60 - 2.5);
+      let limit = Infinity;
+      deps.forEach((d, j) => { if (j > i && d.includes(i) && at[j]) limit = Math.min(limit, at[j].abs - lag); });
+      const mn = Math.max(0, n(a.min, 0)), mx = Math.max(mn, n(a.max, mn + 4)), best = Math.min(mx, Math.max(mn, n(a.best, mn)));
+      let cands = wins.filter(x => x.abs < sAbs && x.abs <= limit && sAbs - x.abs >= mn - 0.01 && sAbs - x.abs <= mx + 0.01);
+      if (!cands.length){
+        // nothing fits the freshness range: use the window closest to it that still keeps the steps in order
+        const ok = wins.filter(x => x.abs < sAbs && x.abs <= limit);
+        cands = ok.length ? [ok.reduce((p, x) => Math.abs((sAbs - x.abs) - best) < Math.abs((sAbs - p.abs) - best) ? x : p)] : [wins[0]];
+      }
+      let pick = null, pickCost = Infinity;
+      for (const x of cands){
+        const ld = load.get(x.di + '|' + x.w) || 0;
+        const cost = Math.abs((sAbs - x.abs) - best) * 4 + Math.max(0, ld + (t.minutes || 0) - cap);
+        if (cost < pickCost - 1e-9 || (Math.abs(cost - pickCost) < 1e-9 && x.abs > pick.abs)){ pick = x; pickCost = cost; }
+      }
+      load.set(pick.di + '|' + pick.w, (load.get(pick.di + '|' + pick.w) || 0) + (t.minutes || 0));
+      at[i] = pick;
+      placed.unshift({t, pick, i});
+    }
+    for (const {t, pick, i} of placed) out.push({di: pick.di, w: pick.w, task: t.task, minutes: t.minutes || null, wait: t.wait || null, main: !!t.main,
+      dish: job.name, for: job.forCodes, order: sAbs * 100 + i});
+  }
+  return out;
+}
+function entryQtyText(e, which){
+  const a = which === 'total' ? e.total : e.need;
+  let s = fmtAmount(a, 'up');
+  if (!s && e.asNeeded) return 'as needed';
+  if (e.asNeeded) s += ' + to taste';
+  return s;
+}
+/* ===== LOGIC END ===== */
+</script>
+<script>
+/* ===== APP ===== */
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => [...(el || document).querySelectorAll(s)];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MEAL_LABEL = {breakfast:'Breakfast', lunch:'Lunch', dinner:'Dinner', snack:'Treat', '':'Any meal'};
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const S = {
+  tab: 'plan', mode: 'pending',
+  recipes: new Map(), pantry: new Map(), plan: defaultPlan(),
+  me: {id: null}, canPlan: true, canWrite: true,
+  canImport: false, canImages: false, canDownload: true,
+  shelfQ: '', shelfMeal: '', recipeQ: '', recipeKind: '', hideCovered: false,
+  bought: new Set(),
+  prepSched: null, prepBusy: false, prepStatus: '', aliases: {}, mergeSugg: null, mergeBusy: false
+};
+let db = null, userCap = null, sampleCap = null, downloadsCap = null;
+let dragging = false, renderQueued = false, lastDragEnd = 0;
+const sortables = [];
+
+// ---------- persistence ----------
+const LS_KEY = 'tenzo-kitchen-local-v1';
+const LS_PREF = 'tenzo-kitchen-prefs-v1';
+function lsGet(k){ try { return JSON.parse(localStorage.getItem(k)) || null; } catch (e) { return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+const local = {recipes:{}, pantry:{}, plan:null, prep:null, prepCache:null, aliases:null};
+function saveLocal(){
+  local.recipes = Object.fromEntries(S.recipes); local.pantry = Object.fromEntries(S.pantry); local.plan = S.plan; local.prep = S.prepSched; local.aliases = S.aliases;
+  lsSet(LS_KEY, local);
+}
+function newId(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+async function writeDoc(col, id, data){
+  const body = JSON.parse(JSON.stringify(data));
+  delete body.id;
+  if (S.mode === 'db'){
+    try { await db.collection(col).doc(id).set(body); }
+    catch (e){ handleWriteError(e); throw e; }
+  } else {
+    S[col].set(id, {...body, id}); saveLocal(); requestRender();
+  }
+}
+async function removeDoc(col, id){
+  if (S.mode === 'db'){
+    try { await db.collection(col).doc(id).delete(); }
+    catch (e){ handleWriteError(e); throw e; }
+  } else {
+    S[col].delete(id); saveLocal(); requestRender();
+  }
+}
+function handleWriteError(e){
+  const code = e && e.code;
+  if (code === 'invalid_argument'){ S.canWrite = false; toast('You have view-only access, so this change was not saved.'); requestRender(); }
+  else if (code === 'quota_exceeded') toast('Storage is full. Delete some old recipes or pantry items first.');
+  else toast('Could not save. Check your connection and try again.');
+}
+
+// Plan: one document, coalesced writes, one at a time
+let planTimer = null, planSaving = false, planDirty = false;
+function schedulePlanSave(){
+  planDirty = true; clearTimeout(planTimer);
+  planTimer = setTimeout(() => { planTimer = null; flushPlan(); }, 450);
+}
+async function flushPlan(){
+  if (planSaving || !planDirty) return;
+  planSaving = true; planDirty = false;
+  try {
+    if (S.mode === 'db') await db.doc('plan/main').set(JSON.parse(JSON.stringify(S.plan)));
+    else saveLocal();
+  } catch (e){
+    if (e && e.code === 'invalid_argument'){ S.canPlan = false; toast('Only the tenzo can change the meal plan.'); requestRender(); }
+    else toast('Could not save the plan. Check your connection.');
+  } finally {
+    planSaving = false;
+    if (planDirty) flushPlan();
+  }
+}
+function planBusy(){ return planSaving || planDirty || planTimer != null; }
+
+// ---------- boot ----------
+async function boot(){
+  const prefs = lsGet(LS_PREF) || {};
+  S.hideCovered = !!prefs.hideCovered;
+  const hash = location.hash.replace('#', '');
+  const t = ['plan','recipes','pantry','grocery','prep'].includes(hash) ? hash : (prefs.tab || 'plan');
+  bindStatic();
+  setTab(t, true);
+  renderAll();
+  const hasClaude = window.claude && typeof window.claude.use === 'function';
+  if (!hasClaude){ startLocal(); return; }
+  const use = n => window.claude.use(n).catch(() => null);
+  const [dbNs, u, smp, dl] = await Promise.all([use('db'), use('user'), use('sample'), use('downloads')]);
+  userCap = u; sampleCap = smp; downloadsCap = dl;
+  S.canDownload = !!dl;
+  if (smp){
+    S.canImport = true;
+    // Only used for the per-call image count. Whether photos can be sent is decided by trying: some views under-report here.
+    try { const lim = await smp.limits(); S.canImages = !!(lim && lim.images); S.imgMax = (lim && lim.images && lim.images.maxCount) || 5; console.info('[tenzo] sample limits', lim); }
+    catch (e){ S.canImages = false; console.info('[tenzo] sample limits unavailable', e); }
+  }
+  if (dbNs){
+    db = dbNs; S.mode = 'db';
+    if (u){
+      S.me.id = await u.id();
+      S.canPlan = await u.isOwner();
+      const w = await u.can('data.write');
+      S.canWrite = w !== false;
+    } else { S.canPlan = false; }
+    startDb();
+  } else startLocal();
+}
+function startLocal(){
+  S.mode = 'local';
+  const o = lsGet(LS_KEY) || {};
+  S.recipes = new Map(Object.entries(o.recipes || {}).map(([k, v]) => [k, {...v, id:k}]));
+  S.pantry = new Map(Object.entries(o.pantry || {}).map(([k, v]) => [k, {...v, id:k}]));
+  S.plan = normPlan(o.plan);
+  S.prepSched = o.prep || null;
+  S.aliases = o.aliases || {};
+  local.prepCache = o.prepCache || null;
+  S.canPlan = true; S.canWrite = true;
+  renderAll();
+}
+function startDb(){
+  const onErr = e => {
+    if (e && e.code === 'revoked'){ setSync('Access changed. Reload the page.', ''); }
+    else toast('Lost the connection to saved data. Reload the page.');
+  };
+  db.collection('recipes').onSnapshot(snap => {
+    S.recipes = new Map(snap.docs.map(d => [d.id, {...JSON.parse(JSON.stringify(d.data())), id:d.id}]));
+    requestRender();
+  }, onErr);
+  db.collection('pantry').onSnapshot(snap => {
+    S.pantry = new Map(snap.docs.map(d => [d.id, {...JSON.parse(JSON.stringify(d.data())), id:d.id}]));
+    requestRender();
+  }, onErr);
+  db.doc('plan/aliases').onSnapshot(doc => {
+    if (aliasSaving || aliasPending) return;
+    S.aliases = doc.exists ? JSON.parse(JSON.stringify(doc.data().map || {})) : {};
+    requestRender();
+  }, onErr);
+  db.doc('plan/prep').onSnapshot(doc => {
+    if (S.prepBusy || psSaving || psPending) return;
+    S.prepSched = doc.exists ? JSON.parse(JSON.stringify(doc.data())) : null;
+    requestRender();
+  }, onErr);
+  db.doc('plan/main').onSnapshot(doc => {
+    if (planBusy()) return;
+    S.plan = normPlan(doc.exists ? doc.data() : null);
+    requestRender();
+  }, onErr);
+  renderAll();
+}
+
+// ---------- rendering ----------
+function requestRender(){
+  if (dragging){ renderQueued = true; return; }
+  if (renderQueued) return;
+  renderQueued = true;
+  setTimeout(() => { renderQueued = false; if (!dragging) renderAll(); else renderQueued = true; }, 16);
+}
+function renderAll(){
+  // keep focus and any unsaved typing across a re-render
+  const a = document.activeElement;
+  const keep = a && a.id && a.closest('main') ? {id:a.id, value:a.value, s:a.selectionStart, e:a.selectionEnd} : null;
+  renderHeader(); renderLists();
+  const panel = $('#tab-' + S.tab);
+  ({plan:renderPlan, recipes:renderRecipes, pantry:renderPantry, grocery:renderGrocery, prep:renderPrep})[S.tab](panel);
+  if (keep){
+    const el = document.getElementById(keep.id);
+    if (el && el !== document.activeElement){
+      if ('value' in el && el.type !== 'checkbox' && el.type !== 'file') el.value = keep.value;
+      el.focus({preventScroll:true});
+      try { if (keep.s != null) el.setSelectionRange(keep.s, keep.e); } catch (e) {}
+    }
+  }
+  resolveNames();
+}
+function setSync(text, cls){ const el = $('#sync'); el.textContent = text; el.className = 'sync ' + (cls || ''); }
+function dayDate(i){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(S.plan.startDate || '');
+  if (!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3] + i);
+}
+function fmtDate(d, opts){ return d.toLocaleDateString(undefined, opts || {month:'short', day:'numeric'}); }
+function retreatRange(){
+  const a = dayDate(0), b = dayDate(5);
+  if (!a) return 'Tuesday dinner through Sunday lunch';
+  return fmtDate(a, {weekday:'short', month:'short', day:'numeric'}) + ' – ' + fmtDate(b, {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+}
+function renderHeader(){
+  const n = Object.values(S.plan.slots).filter(s => s.enabled).length;
+  $('#retreatLine').textContent = retreatRange() + ' · ' + (S.plan.participants || 0) + ' people · ' + n + ' meals';
+  if (S.mode === 'db') setSync(S.canPlan ? 'Saved · shared' : (S.canWrite ? 'Saved · you can edit recipes and pantry' : 'View only'), 'ok');
+  else if (S.mode === 'local') setSync('Saved in this browser only', 'local');
+}
+function renderLists(){
+  $('#unitList').innerHTML = UNIT_OPTIONS.map(u => `<option value="${esc(u)}">`).join('');
+  const items = new Set();
+  for (const r of S.recipes.values()) for (const i of r.ingredients || []) if (i.item) items.add(canonItem(i.item, S.aliases));
+  for (const p of S.pantry.values()) if (p.item) items.add(canonItem(p.item, S.aliases));
+  for (const r of S.recipes.values()) if (isMakeAhead(r) && r.name) items.add(normItem(r.name));
+  $('#itemList').innerHTML = [...items].sort().map(i => `<option value="${esc(i)}">`).join('');
+}
+function knownSection(item){
+  const n = canonItem(item, S.aliases);
+  for (const r of S.recipes.values()) for (const i of r.ingredients || []) if (canonItem(i.item, S.aliases) === n && i.section) return i.section;
+  for (const p of S.pantry.values()) if (canonItem(p.item, S.aliases) === n && p.section) return p.section;
+  return null;
+}
+function sortedRecipes(){ return [...S.recipes.values()].sort((a, b) => (a.name || '').localeCompare(b.name || '')); }
+function usageCodes(){
+  const u = new Map();
+  for (const d of DAYS) for (const m of MEALS){
+    const s = S.plan.slots[d.k + '-' + m.k];
+    if (!s.enabled) continue;
+    for (const id of s.recipeIds){ if (!u.has(id)) u.set(id, []); u.get(id).push(d.l + '-' + m.c); }
+  }
+  for (const bd of BATCH_DAYS) for (const id of S.plan.batches[bd.k]){ if (!u.has(id)) u.set(id, []); u.get(id).push('made ' + bd.tag); }
+  return u;
+}
+const nameCache = {};
+async function resolveNames(){
+  const els = $$('[data-uid]');
+  if (!els.length) return;
+  if (userCap){
+    const missing = [...new Set(els.map(e => e.dataset.uid).filter(id => id && !(id in nameCache)))];
+    if (missing.length){
+      const ps = await userCap.profiles(missing);
+      for (const id of missing) nameCache[id] = (ps[id] && ps[id].name) || '';
+    }
+  }
+  $$('[data-uid]').forEach(el => {
+    const id = el.dataset.uid;
+    el.textContent = id && id === S.me.id ? 'you' : (nameCache[id] || 'someone');
+  });
+}
+function whenText(ts){
+  if (!ts) return '';
+  const d = new Date(ts), now = new Date();
+  return d.toDateString() === now.toDateString() ? d.toLocaleTimeString(undefined, {hour:'numeric', minute:'2-digit'}) : fmtDate(d);
+}
+
+// ---------- tabs ----------
+function setTab(t, silent){
+  S.tab = t;
+  $$('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  $$('section[role="tabpanel"]').forEach(p => { p.hidden = p.id !== 'tab-' + t; });
+  const prefs = lsGet(LS_PREF) || {}; prefs.tab = t; lsSet(LS_PREF, prefs);
+  if (!silent){ renderAll(); window.scrollTo({top:0}); }
+}
+
+// ---------- PLAN ----------
+function renderPlan(panel){
+  sortables.splice(0).forEach(s => s.destroy());
+  const p = S.plan, ro = !S.canPlan;
+  const enabled = Object.values(p.slots).filter(s => s.enabled);
+  const planned = enabled.filter(s => s.recipeIds.length).length;
+  const startWarn = (() => { const d = dayDate(0); return d && d.getDay() !== 2 ? ' The start date is not a Tuesday.' : ''; })();
+  const shelf = sortedRecipes().filter(r =>
+    (!S.shelfQ || (r.name || '').toLowerCase().includes(S.shelfQ.toLowerCase())) &&
+    (!S.shelfMeal || (S.shelfMeal === 'makeahead' ? isMakeAhead(r) : r.mealType === S.shelfMeal && !isMakeAhead(r))));
+  const maPlan = planMakeAheads(p, S.recipes);
+  const misplaced = [];
+  for (const d of DAYS) for (const m of MEALS) for (const id of p.slots[d.k + '-' + m.k].recipeIds) if (isMakeAhead(S.recipes.get(id))) misplaced.push(`${S.recipes.get(id).name} is in ${d.l}-${m.c}. Move it to the make-ahead row.`);
+  for (const bd of BATCH_DAYS) for (const id of p.batches[bd.k]) { const r = S.recipes.get(id); if (r && !isMakeAhead(r)) misplaced.push(`${r.name} is a dish, not a make-ahead, so its ${bd.tag} spot in the make-ahead row is ignored.`); }
+  const maWarnings = maPlan.warnings.concat(misplaced);
+  const coverText = cs => cs.length > 3 ? `${cs[0]} … ${cs[cs.length - 1]} (${cs.length})` : cs.join(', ');
+
+  let board = `<div class="bh"></div>`;
+  BATCH_DAYS.forEach(bd => {
+    const dt = dayDate(bd.di);
+    board += `<div class="bh ${bd.di < 0 ? 'pre' : ''}"><b>${bd.l}</b><span>${dt ? esc(fmtDate(dt)) : bd.di < 0 ? (bd.di === -2 ? '2 days before' : 'day before') : bd.full}</span></div>`;
+  });
+  // make-ahead row: batches go on the day they're made
+  board += `<div class="meal-label ma-label ma-row">Make-ahead</div>`;
+  for (const bd of BATCH_DAYS){
+    const chips = p.batches[bd.k].map(id => {
+      const r = S.recipes.get(id);
+      if (!r) return `<li class="chip missing" data-rid="${esc(id)}" data-kind="ma"><span class="nm">Deleted recipe</span>${ro ? '' : `<button type="button" class="x" aria-label="Remove">×</button>`}</li>`;
+      const b = maPlan.batches.find(x => x.ma.id === id && x.bd && x.bd.k === bd.k);
+      const warn = b && b.warnings.length;
+      return `<li class="chip ma-chip ${warn ? 'warn' : ''} ${b && b.need ? '' : 'idle'}" tabindex="0" title="Click to open${ro ? '' : ', drag to move'}" data-rid="${esc(id)}" data-kind="ma"><span class="nm">${esc(r.name)}</span>
+        <span class="ma-amt">${b && b.need ? 'Make ' + esc(fmtBase(b.need, 'up')) : 'No meal uses this batch'}</span>
+        ${b && b.covers.length ? `<span class="ma-cov">for ${esc(coverText(b.covers))}</span>` : ''}
+        ${warn ? `<span class="ma-warn">⚠ ${esc(b.warnings[0])}</span>` : ''}
+        ${ro ? '' : `<button type="button" class="x" aria-label="Remove ${esc(r.name)}">×</button>`}</li>`;
+    }).join('');
+    board += `<div class="slot ma-cell ma-row ${ro ? 'ro' : ''}" data-day="${bd.k}"><ul class="slot-list ma-list" data-day="${bd.k}" aria-label="Make-ahead, ${esc(bd.full)}">${chips}</ul></div>`;
+  }
+  for (const m of MEALS){
+    board += `<div class="meal-label">${m.l}</div>`;
+    board += `<div class="slot na" aria-hidden="true"></div><div class="slot na" aria-hidden="true"></div>`;
+    for (const d of DAYS){
+      const key = d.k + '-' + m.k, s = p.slots[key];
+      const chips = s.recipeIds.map(id => {
+        const r = S.recipes.get(id);
+        return r ? `<li class="chip" tabindex="0" title="Click to open${ro ? '' : ', drag to move'}" data-rid="${esc(id)}" data-kind="${isMakeAhead(r) ? 'ma' : 'dish'}"><span class="nm">${esc(r.name)}</span>${ro ? '' : `<button type="button" class="x" aria-label="Remove ${esc(r.name)}">×</button>`}</li>`
+                 : `<li class="chip missing" data-rid="${esc(id)}"><span class="nm">Deleted recipe</span>${ro ? '' : `<button type="button" class="x" aria-label="Remove">×</button>`}</li>`;
+      }).join('');
+      board += `<div class="slot meal ${s.enabled ? '' : 'off'} ${ro ? 'ro' : ''}" data-key="${key}">
+        <div class="slot-top">
+          <label class="sw" title="Is the kitchen cooking this meal?"><input type="checkbox" id="en-${key}" data-en="${key}" ${s.enabled ? 'checked' : ''} ${ro ? 'disabled' : ''}><span>${s.enabled ? 'Cooking' : 'Off'}</span></label>
+          <label class="hc" title="People eating this meal. Leave blank to use the default."><input type="number" min="0" id="hc-${key}" data-hc="${key}" class="${s.headcount != null ? 'set' : ''}" placeholder="${esc(p.participants)}" value="${s.headcount != null ? esc(s.headcount) : ''}" ${ro || !s.enabled ? 'disabled' : ''} aria-label="Headcount for ${d.full} ${m.l}"><span>ppl</span></label>
+        </div>
+        <ul class="slot-list" data-key="${key}">${chips}</ul>
+      </div>`;
+    }
+  }
+
+  panel.innerHTML = `
+    <div class="settings">
+      <label class="field">People<input type="number" min="0" id="setPeople" value="${esc(p.participants)}" ${ro ? 'disabled' : ''}></label>
+      <label class="field">Buffer %<input type="number" min="0" max="100" id="setBuffer" value="${esc(p.bufferPct)}" ${ro ? 'disabled' : ''}></label>
+      <label class="field">Tuesday's date<input type="date" id="setStart" value="${esc(p.startDate)}" ${ro ? 'disabled' : ''}></label>
+      <p class="summary">${planned} of ${enabled.length} meals have recipes.${esc(startWarn)}${ro ? '<br>Only the tenzo changes the meal plan.' : '<br>A number in a meal overrides the default headcount.'}</p>
+    </div>
+    ${maWarnings.length ? `<div class="ma-warnings" role="status"><b>Make-ahead check</b>${maWarnings.map(w => `<span>${esc(w)}</span>`).join('')}</div>` : ''}
+    <div class="plan-layout ${ro ? 'readonly' : ''}">
+      ${ro ? '' : `<aside class="shelf" aria-label="Recipe shelf">
+        <h2>Recipes</h2>
+        <input type="search" id="shelfSearch" placeholder="Search recipes" value="${esc(S.shelfQ)}" aria-label="Search recipes">
+        <div class="meal-filter" role="group" aria-label="Filter by meal">
+          ${[['', 'All'], ['breakfast', 'Breakfast'], ['lunch', 'Lunch'], ['dinner', 'Dinner'], ['snack', 'Treat'], ['makeahead', 'Make-ahead']].map(([k, l]) => `<button type="button" data-meal="${k}" aria-pressed="${S.shelfMeal === k}">${l}</button>`).join('')}
+        </div>
+        ${S.recipes.size ? `<p class="note">Drag dishes onto meals and make-aheads onto the day you'll make them. Click a recipe to open it.</p>` : ''}
+        <ul class="shelf-list" id="shelfList">${shelf.map(r => `<li class="shelf-item" tabindex="0" title="Click to open, drag to place" data-rid="${esc(r.id)}" data-kind="${isMakeAhead(r) ? 'ma' : 'dish'}"><span class="nm">${esc(r.name)}</span><span class="mt">${recipeMeta(r)}</span></li>`).join('')}</ul>
+        ${S.recipes.size === 0 ? emptyRecipesBlock(true) : (shelf.length ? '' : '<p class="note">No recipes match.</p>')}
+        <button type="button" class="btn" id="shelfNew">New recipe</button>
+      </aside>`}
+      <div class="board-wrap"><div class="board" id="board">${board}</div></div>
+    </div>
+    ${alwaysSectionHtml(ro)}`;
+
+  if (ro || typeof Sortable === 'undefined') return;
+  const anim = REDUCED ? 0 : 120;
+  const common = {animation:anim, delay:120, delayOnTouchOnly:true, onStart:() => { dragging = true; }, onEnd:onDragEnd};
+  const shelfList = $('#shelfList');
+  if (shelfList) sortables.push(Sortable.create(shelfList, {...common, group:{name:'meals', pull:'clone', put:false}, sort:false}));
+  // dishes only drop into meals, make-aheads only into the make-ahead row
+  $$('.slot-list[data-key]', panel).forEach(ul => sortables.push(Sortable.create(ul, {...common, group:{name:'meals', pull:true, put:(to, from, el) => el.dataset.kind !== 'ma'}, filter:'.x', preventOnFilter:false})));
+  $$('.slot-list[data-day]', panel).forEach(ul => sortables.push(Sortable.create(ul, {...common, group:{name:'meals', pull:true, put:(to, from, el) => el.dataset.kind === 'ma'}, filter:'.x', preventOnFilter:false})));
+}
+// Starting points with rough amounts; the tenzo adjusts them
+const AW_SUGGESTIONS = [
+  {item:'coffee', qty:0.5, unit:'oz', per:'person-day', section:'Other', note:'ground, about 1½ cups brewed'},
+  {item:'oat milk', qty:0.5, unit:'cup', per:'person-day', section:'Tofu & Dairy', note:''},
+  {item:'black tea', qty:1, unit:'each', per:'person-day', section:'Other', note:'tea bags'},
+  {item:'herbal tea', qty:2, unit:'each', per:'person-day', section:'Other', note:'tea bags, assorted'},
+  {item:'honey', qty:1, unit:'tbsp', per:'person-day', section:'Baking & Sweets', note:''},
+  {item:'banana', qty:0.5, unit:'each', per:'person-day', section:'Produce', note:''},
+  {item:'apple', qty:0.5, unit:'each', per:'person-day', section:'Produce', note:''},
+  {item:'mixed nuts', qty:1, unit:'oz', per:'person-day', section:'Baking & Sweets', note:''}
+];
+function alwaysTotalText(it){
+  const q = parseQty(it.qty), f = alwaysFactor(S.plan, it);
+  return q == null ? 'as needed' : f > 0 ? fmtIngredient(q * f, it.unit, 'up') : '—';
+}
+function alwaysSectionHtml(ro){
+  const aw = S.plan.always, items = aw.items;
+  const have = new Set(items.map(i => normItem(i.item)));
+  const secOpts = sel => SECTIONS.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  const dis = ro ? 'disabled' : '';
+  return `<section class="aw" aria-labelledby="awTitle">
+    <div class="aw-head">
+      <div><h2 id="awTitle">Always available</h2>
+      <p class="note">Drinks and snacks that are out all day, like coffee, oat milk and fruit. Per-day amounts go on the grocery list for ${esc(S.plan.participants)} people over the number of days set here, plus the buffer. Whole-retreat totals go on as entered.</p></div>
+      <label class="aw-days">Counts as<input type="number" min="0" step="0.5" id="awDays" value="${esc(aw.days)}" ${dis} aria-label="Number of days">days</label>
+    </div>
+    ${items.length ? `<div class="table-wrap"><table class="pantry"><thead><tr><th>Item</th><th>Amount</th><th>Unit</th><th>Per</th><th>Section</th><th>Note</th><th>Total</th><th></th></tr></thead><tbody>
+      ${items.map(it => `<tr data-aw="${esc(it.id)}">
+        <td><input type="text" id="aw-${esc(it.id)}-item" data-f="item" value="${esc(it.item)}" list="itemList" ${dis} aria-label="Item"></td>
+        <td class="q"><input type="text" id="aw-${esc(it.id)}-qty" data-f="qty" value="${esc(qtyToText(it.qty))}" ${dis} aria-label="Amount"></td>
+        <td class="u"><input type="text" id="aw-${esc(it.id)}-unit" data-f="unit" value="${esc(it.unit)}" list="unitList" ${dis} aria-label="Unit"></td>
+        <td class="per"><select id="aw-${esc(it.id)}-per" data-f="per" ${dis} aria-label="Amount is per"><option value="person-day" ${it.per !== 'total' ? 'selected' : ''}>per person per day</option><option value="total" ${it.per === 'total' ? 'selected' : ''}>for the whole retreat</option></select></td>
+        <td><select id="aw-${esc(it.id)}-section" data-f="section" ${dis} aria-label="Section">${secOpts(it.section)}</select></td>
+        <td><input type="text" id="aw-${esc(it.id)}-note" data-f="note" value="${esc(it.note)}" ${dis} aria-label="Note"></td>
+        <td class="total">${esc(alwaysTotalText(it))}</td>
+        <td>${ro ? '' : `<button type="button" class="btn ghost danger" data-act="aw-del" data-id="${esc(it.id)}" aria-label="Remove ${esc(it.item)}">Remove</button>`}</td>
+      </tr>`).join('')}</tbody></table></div>` : `<p class="note">Nothing yet.${ro ? '' : ' Add items below, or start from a suggestion.'}</p>`}
+    ${ro ? '' : `<form class="addrow" id="awAdd">
+      <label class="field grow">Item<input type="text" id="awItem" list="itemList" placeholder="oat milk" required></label>
+      <label class="field">Amount<input type="text" id="awQty" placeholder="½"></label>
+      <label class="field">Unit<input type="text" id="awUnit" list="unitList" placeholder="cup"></label>
+      <label class="field">Per<select id="awPer"><option value="person-day">per person per day</option><option value="total">for the whole retreat</option></select></label>
+      <label class="field">Section<select id="awSection">${secOpts('Other')}</select></label>
+      <button type="submit" class="btn primary">Add</button>
+    </form>
+    ${AW_SUGGESTIONS.some(x => !have.has(x.item)) ? `<div class="aw-sugg"><span>Quick add, with rough amounts to adjust:</span>${AW_SUGGESTIONS.map((x, i) => have.has(x.item) ? '' : `<button type="button" data-act="aw-sugg" data-i="${i}">${esc(displayItem(x.item))}</button>`).join('')}</div>` : ''}`}
+  </section>`;
+}
+function addAlways(it){
+  S.plan.always.items.push({id: newId('a'), item: normItem(it.item), qty: it.qty == null ? null : Number(it.qty), unit: it.unit ? normUnit(it.unit) : (it.qty == null ? '' : 'each'), per: it.per === 'total' ? 'total' : 'person-day', section: SECTIONS.includes(it.section) ? it.section : 'Other', note: it.note || ''});
+  schedulePlanSave(); renderAll();
+}
+function recipeMeta(r){
+  if (isMakeAhead(r)) return `<span class="tag-ma">Make-ahead</span> Makes ${esc(r.makes && parseQty(r.makes.qty) ? fmtIngredient(parseQty(r.makes.qty), r.makes.unit, 'near') : '?')}${r.keepsDays ? ' · keeps ' + esc(r.keepsDays) + ' d' : ''}`;
+  return `Serves ${esc(r.yields)}${r.mealType ? ' · ' + MEAL_LABEL[r.mealType] : ''}`;
+}
+function onDragEnd(){
+  dragging = false; lastDragEnd = Date.now();
+  const collect = ul => { const ids = []; for (const li of ul.children) if (li.dataset.rid && !ids.includes(li.dataset.rid)) ids.push(li.dataset.rid); return ids; };
+  $$('#board .slot-list[data-key]').forEach(ul => { S.plan.slots[ul.dataset.key].recipeIds = collect(ul); });
+  $$('#board .slot-list[data-day]').forEach(ul => { S.plan.batches[ul.dataset.day] = collect(ul); });
+  schedulePlanSave();
+  renderQueued = false;
+  renderAll();
+}
+function emptyRecipesBlock(compact){
+  const canAdd = S.canWrite && S.mode !== 'pending';
+  return `<div class="empty">
+    <h3>${compact ? 'No recipes yet' : 'Your recipe box is empty'}</h3>
+    <p class="note">Add recipes by hand, or import them from a photo, PDF, website or pasted text. Then drag them onto meals in the plan.</p>
+    ${canAdd ? `<button type="button" class="btn" data-act="examples">Add 3 example recipes</button>` : ''}
+  </div>`;
+}
+
+// ---------- RECIPES ----------
+function renderRecipes(panel){
+  const q = S.recipeQ.toLowerCase();
+  const list = sortedRecipes().filter(r => (!q || (r.name || '').toLowerCase().includes(q) || (r.ingredients || []).some(i => (i.item || '').includes(q))) &&
+    (!S.recipeKind || (S.recipeKind === 'makeahead') === isMakeAhead(r)));
+  const used = usageCodes();
+  const maNames = makeAheadIndex(S.recipes);
+  panel.innerHTML = `
+    <div class="toolbar">
+      <label class="field" style="flex:1;min-width:200px">Search<input type="search" id="recipeSearch" value="${esc(S.recipeQ)}" placeholder="Recipe or ingredient"></label>
+      ${S.canWrite ? `<button type="button" class="btn primary" data-act="new">New recipe</button>
+      ${S.canImport ? `<button type="button" class="btn" data-act="import">Import recipe</button>` : ''}` : ''}
+    </div>
+    ${!S.canImport && S.mode === 'local' ? `<p class="note">Importing recipes works when this page is opened on claude.ai.</p>` : ''}
+    ${S.recipes.size ? `<div class="meal-filter" role="group" aria-label="Show">${[['', 'All'], ['dish', 'Dishes'], ['makeahead', 'Make-aheads']].map(([k, l]) => `<button type="button" data-rkind="${k}" aria-pressed="${S.recipeKind === k}">${l}</button>`).join('')}</div>` : ''}
+    ${S.recipes.size === 0 ? emptyRecipesBlock(false) : `
+    <div class="cards">${list.map(r => {
+      const codes = used.get(r.id) || [];
+      const ings = (r.ingredients || []).map(i => i.item).filter(Boolean);
+      return `<article class="card">
+        <h3>${esc(r.name)}</h3>
+        <div class="meta">${recipeMeta(r)} · ${ings.length} ingredients${r.source ? ' · ' + esc(r.source) : ''}</div>
+        <div class="ings">${(r.ingredients || []).filter(i => i.item).map(i => resolveMakeAhead(i, S.recipes, maNames) ? `<b>${esc(i.item)}</b>` : esc(i.item)).join(', ')}</div>
+        <div class="used">${codes.length ? (isMakeAhead(r) ? 'Batches: ' : 'On the menu: ') + esc(codes.join(', ')) : `<span class="note">${isMakeAhead(r) ? 'No batches planned yet' : 'Not on the menu yet'}</span>`}</div>
+        ${r.updatedBy ? `<div class="meta">Edited by <span data-uid="${esc(r.updatedBy)}">…</span> · ${esc(whenText(r.updatedAt))}</div>` : ''}
+        <div class="actions">
+          <button type="button" class="btn" data-act="view" data-id="${esc(r.id)}">${S.canWrite ? 'Edit' : 'View'}</button>
+          ${S.canWrite ? `<button type="button" class="btn ghost" data-act="dup" data-id="${esc(r.id)}">Duplicate</button>
+          <button type="button" class="btn ghost danger" data-act="del" data-id="${esc(r.id)}">Delete</button>` : ''}
+        </div>
+      </article>`;
+    }).join('')}</div>
+    ${list.length ? '' : '<p class="note">No recipes match.</p>'}`}`;
+}
+
+// ---------- PANTRY ----------
+function renderPantry(panel){
+  const g = scaleAndAggregate(S.plan, S.recipes, [...S.pantry.values()], S.aliases);
+  const needBy = new Map(g.entries.map(e => [e.item, e]));
+  const items = [...S.pantry.values()].sort((a, b) => SECTIONS.indexOf(a.section || 'Other') - SECTIONS.indexOf(b.section || 'Other') || (a.item || '').localeCompare(b.item || ''));
+  const ro = !S.canWrite;
+  const secOpts = sel => SECTIONS.map(s => `<option ${s === sel ? 'selected' : ''}>${esc(s)}</option>`).join('');
+  let rows = '', lastSec = null;
+  for (const p of items){
+    const sec = p.section || 'Other';
+    if (sec !== lastSec){ rows += `<tr class="sec"><td colspan="7">${esc(sec)}</td></tr>`; lastSec = sec; }
+    const e = needBy.get(canonItem(p.item, S.aliases));
+    const needTxt = e ? (e.covered ? 'Covers the plan' : 'Plan needs ' + entryQtyText(e, 'total')) : 'Not in the plan';
+    rows += `<tr data-pid="${esc(p.id)}">
+      <td><input type="text" id="p-${esc(p.id)}-item" data-f="item" value="${esc(p.item)}" list="itemList" ${ro ? 'disabled' : ''} aria-label="Item"></td>
+      <td class="q"><input type="text" id="p-${esc(p.id)}-qty" data-f="qty" value="${esc(qtyToText(p.qty))}" ${ro ? 'disabled' : ''} aria-label="Quantity"></td>
+      <td class="u"><input type="text" id="p-${esc(p.id)}-unit" data-f="unit" value="${esc(p.unit || '')}" list="unitList" ${ro ? 'disabled' : ''} aria-label="Unit"></td>
+      <td><select id="p-${esc(p.id)}-section" data-f="section" ${ro ? 'disabled' : ''} aria-label="Section">${secOpts(sec)}</select></td>
+      <td><input type="text" id="p-${esc(p.id)}-note" data-f="note" value="${esc(p.note || '')}" placeholder="Where it's kept" ${ro ? 'disabled' : ''} aria-label="Note"></td>
+      <td class="need">${esc(needTxt)}${p.updatedBy ? `<br><span class="who"><span data-uid="${esc(p.updatedBy)}">…</span> · ${esc(whenText(p.updatedAt))}</span>` : ''}</td>
+      <td>${ro ? '' : `<button type="button" class="btn ghost danger" data-act="pdel" data-id="${esc(p.id)}" aria-label="Remove ${esc(p.item)}">Remove</button>`}</td>
+    </tr>`;
+  }
+  panel.innerHTML = `
+    <div>
+      <h2 style="font-size:24px">Pantry</h2>
+      <p class="note">What the kitchen already has. The grocery list subtracts these amounts. Anyone helping in the kitchen can update this.</p>
+    </div>
+    ${ro ? '' : `<form class="addrow" id="pantryAdd">
+      <label class="field grow">Item<input type="text" id="paItem" list="itemList" placeholder="brown rice" required></label>
+      <label class="field">Qty<input type="text" id="paQty" placeholder="5"></label>
+      <label class="field">Unit<input type="text" id="paUnit" list="unitList" placeholder="lb"></label>
+      <label class="field">Section<select id="paSection">${secOpts('Other')}</select></label>
+      <label class="field">Note<input type="text" id="paNote" placeholder="Where it's kept"></label>
+      <button type="submit" class="btn primary">Add</button>
+    </form>`}
+    ${items.length ? `<div class="table-wrap"><table class="pantry"><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Section</th><th>Note</th><th>Plan</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<div class="empty"><h3>Nothing in the pantry yet</h3><p class="note">Add what's already on the shelves, like rice, oil, salt and tea, so you don't buy it twice.</p></div>`}`;
+}
+
+// ---------- GROCERY ----------
+function groceryModel(){ return scaleAndAggregate(S.plan, S.recipes, [...S.pantry.values()], S.aliases); }
+function usesHtml(e){
+  return e.uses.map(u => `${esc(u.name)} <span class="code">(${esc(u.codes.join(', '))})</span>`).join(' · ');
+}
+function pantryLine(e){
+  if (!e.have) return '';
+  const haveTxt = fmtAmount(e.have, 'near') || 'some';
+  if (e.covered) return `<div class="gl-pantry">✓ Covered by the pantry (${esc(haveTxt)})</div>`;
+  if (e.unmatched) return `<div class="gl-pantry check">Pantry has ${esc(haveTxt)} in different units. Check by hand.</div>`;
+  return `<div class="gl-pantry">Pantry has ${esc(haveTxt)} · total needed ${esc(entryQtyText(e, 'total'))}</div>`;
+}
+function groceryStatsText(g){
+  const p = S.plan;
+  return `${g.stats.meals} meals · ${p.participants} people${g.stats.overrides ? ` (${g.stats.overrides} ${g.stats.overrides > 1 ? 'meals' : 'meal'} adjusted)` : ''} · ${Number(p.bufferPct) || 0}% buffer included`;
+}
+function renderGrocery(panel){
+  const g = groceryModel();
+  const shown = g.sections.map(s => ({...s, entries: s.entries.filter(e => !(S.hideCovered && e.covered))})).filter(s => s.entries.length);
+  const coveredN = g.entries.filter(e => e.covered).length;
+  panel.innerHTML = `
+    <div class="g-head">
+      <div><h2>Grocery list</h2><p class="g-stats">${esc(retreatRange())} · ${esc(groceryStatsText(g))}</p></div>
+      <div class="toolbar no-print">
+        <label class="sw"><input type="checkbox" id="hideCovered" ${S.hideCovered ? 'checked' : ''}> Hide what the pantry covers${coveredN ? ` (${coveredN})` : ''}</label>
+        ${S.canDownload ? `<button type="button" class="btn primary" data-act="dl-grocery">Download printable list</button>` : ''}
+        <button type="button" class="btn" data-act="copy-grocery">Copy as text</button>
+      </div>
+    </div>
+    <p class="legend">Meal codes: <span class="code">B</span> breakfast · <span class="code">L</span> lunch · <span class="code">D</span> dinner · <span class="code">T</span> treat. Make-aheads show the day each batch is made. Amounts are rounded up to shop-friendly sizes.</p>
+    ${mergePanelHtml(g)}
+    ${g.stats.emptyMeals.length ? `<div class="g-warn">These meals have no recipes yet: ${esc(g.stats.emptyMeals.join(', '))}.</div>` : ''}
+    ${g.ma.warnings.length || g.stats.misplaced.length ? `<div class="g-warn">${g.ma.warnings.concat(g.stats.misplaced.map(x => x + ' is a make-ahead placed on a meal, so it was left out. Move it to the make-ahead row in the plan.')).map(esc).join('<br>')}</div>` : ''}
+    ${g.stats.missing ? `<div class="g-warn">${g.stats.missing} planned recipe${g.stats.missing > 1 ? 's were' : ' was'} deleted. Remove ${g.stats.missing > 1 ? 'them' : 'it'} from the plan.</div>` : ''}
+    ${g.entries.length ? `<div class="g-grid">${shown.map(s => `
+      <div class="g-sec"><h3>${esc(s.name)} <small>${s.entries.length}</small></h3><ul class="g-list">${s.entries.map(e => `
+        <li class="gl ${e.covered ? 'covered' : ''} ${S.bought.has(e.item) ? 'done' : ''}">
+          <input type="checkbox" id="gb-${esc(e.item.replace(/[^a-z0-9]+/g, '-'))}" data-bought="${esc(e.item)}" ${S.bought.has(e.item) ? 'checked' : ''} aria-label="Got ${esc(e.item)}">
+          <div><div class="gl-top"><span class="gl-item">${esc(displayItem(e.item))}</span><span class="gl-qty">${esc(e.covered ? entryQtyText(e, 'total') : entryQtyText(e, 'need'))}</span></div>
+          ${e.volNote ? `<div class="gl-uses">about ${esc(fmtVol(e.volNote, 'up'))}</div>` : ''}
+          <div class="gl-uses">${usesHtml(e)}</div>${e.aka.length ? `<div class="gl-aka">Also listed as ${esc(e.aka.join(', '))}</div>` : ''}${pantryLine(e)}</div>
+        </li>`).join('')}</ul></div>`).join('')}</div>`
+      : `<div class="empty"><h3>Nothing to buy yet</h3><p class="note">Put recipes on the meal plan and the list fills in here, scaled to each meal's headcount.</p></div>`}`;
+}
+// ---------- same ingredient, different names ----------
+function allIngredientNames(){
+  const names = new Map();  // name -> {units, sections, uses}
+  const add = (item, unit, section) => {
+    const n = normItem(item);
+    if (!n || IGNORE_ITEMS.has(n)) return;
+    const x = names.get(n) || {units: new Set(), sections: new Set(), uses: 0};
+    if (unit) x.units.add(normUnit(unit)); if (section) x.sections.add(section); x.uses++;
+    names.set(n, x);
+  };
+  const maNames = makeAheadIndex(S.recipes);
+  for (const r of S.recipes.values()) for (const i of r.ingredients || []) if (!resolveMakeAhead(i, S.recipes, maNames)) add(i.item, i.unit, i.section);
+  for (const p of S.pantry.values()) add(p.item, p.unit, p.section);
+  for (const it of S.plan.always.items) add(it.item, it.unit, it.section);
+  return names;
+}
+function mergePanelHtml(g){
+  const al = S.aliases || {};
+  const groups = new Map();
+  for (const from of Object.keys(al)){ const to = canonItem(from, al); if (to === from) continue; if (!groups.has(to)) groups.set(to, []); groups.get(to).push(from); }
+  const can = S.canPlan;
+  const sugg = (S.mergeSugg || []).filter(x => x.same.some(n => canonItem(n, al) !== canonItem(x.name, al)));
+  return `<details class="merge no-print" id="mergePanel" ${S.mergeOpen ? 'open' : ''}>
+    <summary>Same ingredient, different names${groups.size ? ` · ${groups.size} combined` : ''}</summary>
+    <div class="merge-body">
+      <p class="note">Recipes sometimes call one thing by different names. Combined names are added up as one line here and matched against the pantry. Your recipes stay as written.</p>
+      ${groups.size ? `<ul class="merge-list">${[...groups.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([to, froms]) => `<li><b>${esc(displayItem(to))}</b><span class="note">also counts</span> ${froms.sort().map(f => `<span class="merge-chip">${esc(f)}${can ? `<button type="button" class="x" data-act="alias-undo" data-from="${esc(f)}" aria-label="Stop counting ${esc(f)} as ${esc(to)}">×</button>` : ''}</span>`).join(' ')}</li>`).join('')}</ul>` : ''}
+      ${can ? `<form class="merge-form" id="mergeForm">
+        <label class="field">Count<input type="text" id="mergeFrom" list="mergeNames" placeholder="green onion" required></label>
+        <label class="field">as<input type="text" id="mergeTo" list="mergeNames" placeholder="scallion" required></label>
+        <button type="submit" class="btn">Combine</button>
+        ${S.canImport ? `<button type="button" class="btn" data-act="merge-find" ${S.mergeBusy ? 'disabled' : ''}>${S.mergeBusy ? 'Looking for duplicates…' : 'Find duplicates with Claude'}</button>` : ''}
+      </form>
+      <datalist id="mergeNames">${[...allIngredientNames().keys()].sort().map(n => `<option value="${esc(n)}">`).join('')}</datalist>` : ''}
+      ${sugg.length ? `<div class="merge-sugg"><div class="merge-sugg-head"><b>Suggested by Claude</b>${sugg.some(x => x.sure) ? `<button type="button" class="btn" data-act="merge-all">Combine all the sure ones</button>` : ''}</div>
+        <ul>${sugg.map((x, i) => `<li class="${x.sure ? '' : 'maybe'}"><span><b>${esc(displayItem(x.name))}</b> ← ${esc(x.same.filter(n => n !== x.name).join(', '))}${x.sure ? '' : ' <span class="tag-maybe">check</span>'}${x.why ? `<br><span class="note">${esc(x.why)}</span>` : ''}</span>
+          <span class="merge-acts"><button type="button" class="btn" data-act="merge-one" data-i="${i}">Combine</button><button type="button" class="btn ghost" data-act="merge-skip" data-i="${i}">Skip</button></span></li>`).join('')}</ul></div>`
+        : S.mergeSugg && !S.mergeBusy ? `<p class="note">Claude found no other likely duplicates.</p>` : ''}
+    </div>
+  </details>`;
+}
+let aliasSaving = false, aliasPending = false;
+async function saveAliases(){
+  if (aliasSaving){ aliasPending = true; return; }
+  aliasSaving = true;
+  try {
+    if (S.mode === 'db') await db.doc('plan/aliases').set({map: JSON.parse(JSON.stringify(S.aliases))});
+    else saveLocal();
+  } catch (e){ toast('Could not save that change. Check your connection.'); }
+  finally { aliasSaving = false; if (aliasPending){ aliasPending = false; saveAliases(); } }
+}
+// Count every name in `names` as `to`; anything already pointing at those names follows along
+function combineNames(names, to){
+  const target = normItem(to);
+  const al = {...S.aliases};
+  const finalTarget = canonItem(target, al);
+  for (const raw of names){
+    const n = normItem(raw);
+    if (!n || n === finalTarget) continue;
+    al[n] = finalTarget;
+  }
+  for (const k of Object.keys(al)) if (al[k] && names.map(normItem).includes(al[k])) al[k] = finalTarget;
+  delete al[finalTarget];
+  S.aliases = al; saveAliases(); renderAll();
+}
+async function findDuplicates(){
+  if (!sampleCap || S.mergeBusy) return;
+  const names = allIngredientNames();
+  const list = [...names.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([n, x]) => `${n} | units: ${[...x.units].join(', ') || '-'} | ${[...x.sections].join(', ') || '-'}`).join('\n');
+  const already = Object.entries(S.aliases).map(([f, t]) => `${f} → ${t}`).join('\n');
+  S.mergeBusy = true; S.mergeOpen = true; renderAll();
+  try {
+    const data = await sampleCap.json(`You are helping the cook of a retreat kitchen clean up a shopping list. Below are all ingredient names used across their recipes, pantry and drinks station, with the units and store sections they appear with.
+
+Find groups of names that are the same thing to buy, where one purchase covers every name in the group. Typical cases: synonyms ("green onion" and "scallion"), extra words ("fresh ginger" and "ginger", "miso paste" and "miso"), and spelling variants ("sichuan pepper" and "sichuan peppercorn").
+Do NOT group things that are bought separately or behave differently in cooking, even if related: silken vs firm tofu, light vs dark soy sauce, dried vs fresh shiitake, raw vs toasted when both are bought, cinnamon sticks vs ground cinnamon, flaky finishing salt vs cooking salt. When you aren't sure, still list the group but set "sure" to false and say why in a few words.
+For each group, "name" is the clearest everyday shopping name, normally one of the names given.
+${already ? `These are already combined; don't repeat them:\n${already}\n` : ''}
+Names:
+${list}
+
+Reply with only JSON: {"groups":[{"name": string, "same": [every name in the group, including "name" if it is one of them], "sure": boolean, "why": string}]}`, {cache: false, modelTier: 'default'});
+    const groupsIn = data && Array.isArray(data.groups) ? data.groups : [];
+    S.mergeSugg = groupsIn.map(x => ({name: normItem(x.name), same: [...new Set((Array.isArray(x.same) ? x.same : []).map(normItem).filter(n => names.has(n)))], sure: !!x.sure, why: String(x.why || '').slice(0, 160)}))
+      .filter(x => x.name && x.same.filter(n => n !== x.name).length);
+  } catch (e){
+    const code = e && e.code;
+    if (code !== 'cancelled') toast(code === 'not_granted' ? 'Claude access was not allowed for this page.' : code === 'rate_limited' ? 'Claude is busy right now. Try again in a minute.' : 'Could not look for duplicates. Try again.');
+  } finally { S.mergeBusy = false; renderAll(); }
+}
+function groceryText(){
+  const g = groceryModel();
+  let out = `GROCERY LIST · ${retreatRange()}\n${groceryStatsText(g)}\n`;
+  for (const s of g.sections){
+    const es = s.entries.filter(e => !(S.hideCovered && e.covered));
+    if (!es.length) continue;
+    out += `\n${s.name.toUpperCase()}\n`;
+    for (const e of es){
+      out += `☐ ${displayItem(e.item)}: ${e.covered ? 'covered by pantry' : entryQtyText(e, 'need')}${e.aka.length ? ` (also listed as ${e.aka.join(', ')})` : ''}\n    ${e.uses.map(u => `${u.name} (${u.codes.join(', ')})`).join('; ')}\n`;
+    }
+  }
+  return out;
+}
+
+// ---------- PREP ----------
+// Every day with something to do: make-ahead batches (including the two days before) and the meals
+function prepModel(){
+  const maPlan = planMakeAheads(S.plan, S.recipes);
+  const days = [];
+  for (const bd of BATCH_DAYS){
+    const batches = maPlan.batches.filter(b => b.bd && b.bd.k === bd.k);
+    const meals = [];
+    if (bd.di >= 0){
+      const d = DAYS[bd.di];
+      for (const m of MEALS){
+        const key = d.k + '-' + m.k, s = S.plan.slots[key];
+        if (!s.enabled) continue;
+        const recipes = s.recipeIds.map(id => S.recipes.get(id)).filter(r => r && !isMakeAhead(r));
+        meals.push({m, key, hc: slotHeadcount(S.plan, s), recipes, override: s.headcount != null});
+      }
+    }
+    if (meals.length || batches.length) days.push({bd, meals, batches});
+  }
+  return {days, maPlan};
+}
+function dishIngs(r, hc, key, maPlan){
+  const f = hc / (Number(r.yields) || 1);
+  return (r.ingredients || []).map((i, ii) => {
+    const q = parseQty(i.qty);
+    const ma = resolveMakeAhead(i, S.recipes, maPlan.maByName);
+    let note = i.note || '';
+    if (ma){ const b = maPlan.assign.get(key + '|' + r.id + '|' + ii); note = [note, b && b.bd ? `make-ahead, from the ${b.bd.tag} batch` : 'make-ahead, no batch scheduled'].filter(Boolean).join('; '); }
+    return {amt: q == null ? 'to taste' : fmtIngredient(q * f, i.unit, 'near'), item: i.item, note, ma: !!ma};
+  });
+}
+function batchIngs(b, maPlan){
+  return (b.ma.ingredients || []).map(i => {
+    const q = parseQty(i.qty);
+    const ma = resolveMakeAhead(i, S.recipes, maPlan.maByName);
+    return {amt: q == null ? 'to taste' : fmtIngredient(q * b.factor, i.unit, 'near'), item: i.item, note: [i.note, ma ? 'make-ahead' : ''].filter(Boolean).join('; '), ma: !!ma};
+  });
+}
+function batchSummary(b){
+  if (!b.need) return 'No meal uses this batch yet.';
+  const mk = b.ma.makes ? fmtIngredient(parseQty(b.ma.makes.qty), b.ma.makes.unit, 'near') : '?';
+  return `Make ${fmtBase(b.need, 'up')} (×${+b.factor.toFixed(2)} of the recipe, which makes ${mk}) · for ${b.covers.join(', ')}${b.ma.keepsDays ? ` · keeps ${b.ma.keepsDays} ${Number(b.ma.keepsDays) === 1 ? 'day' : 'days'}` : ''}`;
+}
+function alwaysListHtml(print){
+  const items = S.plan.always.items;
+  if (!items.length) return '';
+  const per = it => it.per === 'total' ? 'for the whole retreat' : `${qtyToText(it.qty)} ${it.unit} per person per day`;
+  const lis = items.map(it => `<li><span>${esc(displayItem(it.item))}${it.note ? `, <span class="note">${esc(it.note)}</span>` : ''} <span class="note">(${esc(per(it))})</span></span><span class="qty">${esc(alwaysTotalText(it))}</span></li>`).join('');
+  return print ? `<h2>Always available</h2><p class="meta">Out all day. Totals for ${esc(S.plan.participants)} people over ${esc(S.plan.always.days)} days, before the shopping buffer.</p><ul class="awp">${lis}</ul>`
+    : `<section class="aw"><div class="aw-head"><div><h2>Always available</h2><p class="note">Out all day. Totals for ${esc(S.plan.participants)} people over ${esc(S.plan.always.days)} days, before the shopping buffer.</p></div></div><ul class="aw-list">${lis}</ul></section>`;
+}
+function dayTitle(bd){ const dt = dayDate(bd.di); return bd.full + (dt ? ' · ' + fmtDate(dt) : ''); }
+function menuTableHtml(){
+  const maPlan = planMakeAheads(S.plan, S.recipes);
+  let h = `<table class="menu"><thead><tr><th></th>${BATCH_DAYS.map(bd => { const dt = dayDate(bd.di); return `<th>${bd.l}<small>${dt ? esc(fmtDate(dt)) : bd.di < 0 ? 'before' : ''}</small></th>`; }).join('')}</tr></thead><tbody>`;
+  h += `<tr><td class="ml">Make-ahead</td>`;
+  for (const bd of BATCH_DAYS){
+    const bs = maPlan.batches.filter(b => b.bd && b.bd.k === bd.k);
+    h += `<td>${bs.map(b => `${esc(b.ma.name)}${b.need ? `<div class="hcn">${esc(fmtBase(b.need, 'up'))}</div>` : ''}`).join('') || ''}</td>`;
+  }
+  h += `</tr>`;
+  for (const m of MEALS){
+    h += `<tr><td class="ml">${m.l}</td><td class="off"></td><td class="off"></td>`;
+    for (const d of DAYS){
+      const s = S.plan.slots[d.k + '-' + m.k];
+      if (!s.enabled){ h += `<td class="off">—</td>`; continue; }
+      const names = s.recipeIds.map(id => S.recipes.get(id)).filter(Boolean).map(r => esc(r.name));
+      h += `<td>${names.join('<br>') || '<span class="hcn">nothing planned</span>'}<div class="hcn">${slotHeadcount(S.plan, s)} people</div></td>`;
+    }
+    h += `</tr>`;
+  }
+  return h + `</tbody></table>`;
+}
+// ---------- PREP SCHEDULE (advance prep, read from the recipes by Claude) ----------
+const PREP_DAYS = [{k:'sunBefore', l:'Sun', full:'Sunday, two days before', off:-2}, {k:'monBefore', l:'Mon', full:'Monday, the day before', off:-1}]
+  .concat(DAYS.map((d, i) => ({k:d.k, l:d.l, full:d.full, off:i})));
+const WINDOWS = [{k:'before_breakfast', l:'Before breakfast'}, {k:'after_breakfast', l:'After breakfast'}, {k:'afternoon', l:'Afternoon'}, {k:'after_dinner', l:'After dinner'}];
+function hashStr(str){ let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+function prepInputText(){
+  const out = [];
+  const {days, maPlan} = prepModel();
+  for (const {bd, meals, batches} of days){
+    for (const b of batches){
+      if (!b.need) continue;
+      const ings = batchIngs(b, maPlan).map(x => `${x.amt} ${x.item}${x.note ? ' (' + x.note + ')' : ''}`).join('; ');
+      out.push(`### MAKE-AHEAD BATCH on day "${bd.k}" (${bd.full}) · ${b.ma.name} · make ${fmtBase(b.need, 'up')} · used by ${b.covers.join(', ')}${b.ma.keepsDays ? ' · keeps ' + b.ma.keepsDays + ' days' : ''}\nIngredients, already scaled: ${ings}\nMethod:\n${String(b.ma.steps || '(no method written)').slice(0, 3000)}`);
+    }
+    for (const {m, key, hc, recipes} of meals) for (const r of recipes){
+      const ings = dishIngs(r, hc, key, maPlan).map(x => `${x.amt} ${x.item}${x.note ? ' (' + x.note + ')' : ''}`).join('; ');
+      out.push(`### ${bd.l}-${m.c} · ${bd.full} ${m.l.toLowerCase()} · ${hc} people · ${r.name}\nIngredients, already scaled: ${ings}\nMethod:\n${String(r.steps || '(no method written)').slice(0, 3000)}`);
+    }
+  }
+  return out.join('\n\n');
+}
+const MEAL_SERVE_TEXT = {breakfast:'served about 7:30 am', lunch:'served about noon', snack:'set out right after lunch, about 1 pm', dinner:'served about 6 pm'};
+const PREP_V = 5;
+function fmtMinutes(n){ if (!n) return ''; return n >= 60 ? (Math.round(n / 30) / 2) + ' h' : n + ' min'; }
+function alwaysDailyText(it){
+  const q = parseQty(it.qty);
+  if (q == null) return 'as needed';
+  if (it.per === 'total') return fmtIngredient(q / Math.max(1, Number(S.plan.always.days) || 1), it.unit, 'near') + ' a day';
+  return fmtIngredient(q * (Number(S.plan.participants) || 0), it.unit, 'near') + ' a day';
+}
+// Everything the kitchen has to produce: each planned dish and each make-ahead batch (always-available items take no prep)
+function prepJobs(){
+  const {days, maPlan} = prepModel();
+  const jobs = [];
+  const ingText = list => list.map(x => `${x.amt} ${x.item}${x.note ? ' (' + x.note.replace(/make-ahead, (from the .+? batch|no batch scheduled)/, 'make-ahead') + ')' : ''}`).join('; ');
+  for (const {bd, meals, batches} of days){
+    for (const b of batches){
+      if (!b.need) continue;
+      jobs.push({di: bd.di, serve: 'batch', name: b.ma.name + ' (make-ahead)', forCodes: b.covers.length > 3 ? [b.covers[0] + ' … ' + b.covers[b.covers.length - 1]] : b.covers.slice(),
+        head: `MAKE-AHEAD BATCH: make ${fmtBase(b.need, 'up')} of ${b.ma.name}, ready by noon on the day it's made, then stored for later meals${b.ma.keepsDays ? ` (keeps ${b.ma.keepsDays} days)` : ''}.`,
+        ings: ingText(batchIngs(b, maPlan)), steps: b.ma.steps});
+    }
+    for (const {m, key, hc, recipes} of meals) for (const r of recipes){
+      jobs.push({di: bd.di, serve: m.k, name: r.name, forCodes: [bd.l + '-' + m.c],
+        head: `DISH: ${r.name}, ${MEAL_SERVE_TEXT[m.k]}, for ${hc} people.`, ings: ingText(dishIngs(r, hc, key, maPlan)), steps: r.steps});
+    }
+  }
+  for (const j of jobs) j.hash = 'k' + hashStr(JSON.stringify([PREP_V, j.head, j.ings, j.steps || '']));
+  return jobs;
+}
+function breakdownPrompt(group){
+  return `You are an experienced sous-chef helping the tenzo (head cook) of a small meditation retreat kitchen draft a prep schedule.
+
+For EACH item below, give a short plan, not a step-by-step recipe:
+1. Up to 3 PREP-AHEAD tasks: work worth doing well before the meal, hours or days ahead, such as soaking beans, making a sauce, pickling, making dough, baking, cutting hardy vegetables. Give none if nothing is worth doing ahead.
+2. Then exactly ONE MAIN task, always last: the cooking and serving done close to the meal.
+Write each task as a brief summary of the action, a few words, like a line on a kitchen whiteboard: "Soak chickpeas", "Make dressing", "Cut vegetables", "Cook soba and assemble bowls". No amounts, no measurements, no step-by-step detail; the cook will read the recipe for that. Ingredients marked "make-ahead" are already made; don't plan to make them. For a make-ahead batch, the main task is making it; prep-ahead tasks are anything it needs earlier, such as "Soak kombu".
+The scaled ingredients below are only there to help you estimate the time.
+
+For each task estimate hands-on minutes and unattended minutes (soaking, simmering, chilling, baking; 0 if none) for that quantity, and how many hours before serving it should happen:
+- min: the latest it can be done. 0 for the main task. At least 8 for an overnight soak. Leave time for anything that must cool, set, marinate or chill.
+- max: the earliest it can be done while staying fresh, safe and good. Be strict: dressed salads, cut avocado or apple, blanched greens, crisp food, cooked noodles and rice are last-minute (0.5 to 2); cut herbs and scallions 3 to 4; most cut hardy vegetables 24; sauces, dressings, pickles, doughs and soaks 24 to 72.
+- best: what a well-run kitchen would choose.
+
+${group.map(j => `### id: ${j.hash}
+${j.head}
+Ingredients, already scaled: ${j.ings || '(see above)'}
+Method:
+${String(j.steps || '(no method written; use standard technique)').slice(0, 3000)}`).join('\n\n')}
+
+Reply with only compact JSON (no extra spaces or line breaks) of this shape:
+{"items":[{"id":string,"tasks":[TASK,...]}],"notes":[string]}
+Each TASK is an array: [brief summary (at most 6 words, no amounts), hands-on minutes, unattended minutes, min hours, best hours, max hours]. The last TASK of each item is its main task.
+For example: ["Soak chickpeas",5,600,8,14,30]
+Include every id above. "notes" holds up to 2 short practical warnings (equipment, fridge space, timing) for these items, or is empty.`;
+}
+function cleanTasks(list){
+  const n = (v, d) => { const x = Number(v); return isFinite(x) ? x : d; };
+  // tasks arrive as compact arrays: [text, minutes, wait, min, best, max]; the last one is the main task
+  let raw = (Array.isArray(list) ? list : []).map(t => Array.isArray(t)
+    ? {task: t[0], minutes: t[1], wait: t[2], ahead: {min: t[3], best: t[4], max: t[5]}}
+    : t).filter(t => t && t.task);
+  if (!raw.length) return [];
+  raw = raw.slice(0, -1).slice(0, 3).concat(raw.slice(-1));
+  return raw.map((t, i) => {
+    const a = t.ahead || {}, main = i === raw.length - 1;
+    const min = Math.min(96, Math.max(0, n(a.min, 0))), max = Math.min(120, Math.max(min, n(a.max, min + 4)));
+    return {task: String(t.task).slice(0, 200), minutes: Math.max(0, Math.round(n(t.minutes, 10))), wait: Math.max(0, Math.round(n(t.wait, 0))),
+      ahead: {min, max, best: Math.min(max, Math.max(min, n(a.best, min)))}, main, needs: main ? raw.slice(0, -1).map((_, k) => k) : []};
+  });
+}
+// Each dish's breakdown is its own record, saved as soon as it arrives, so a stopped or closed run loses nothing
+const PREP_CACHE = 'plan/cache/items';
+async function loadPrepCache(){
+  if (S.mode !== 'db') return Object.fromEntries(Object.entries((local.prepCache && local.prepCache.items) || {}).filter(([, v]) => v.v === PREP_V));
+  try {
+    const snap = await db.collection(PREP_CACHE).limit(1000).get();
+    const out = {};
+    for (const d of snap.docs){ const v = d.data(); if (v && v.v === PREP_V && Array.isArray(v.tasks)) out[d.id] = JSON.parse(JSON.stringify(v)); }
+    return out;
+  } catch (e){ console.warn('[tenzo] could not read saved breakdowns', e); return {}; }
+}
+async function savePrepEntry(hash, entry){
+  if (S.mode !== 'db'){ local.prepCache = local.prepCache || {items: {}}; local.prepCache.items[hash] = entry; saveLocal(); return; }
+  try { await db.collection(PREP_CACHE).doc(hash).set(entry); } catch (e){ console.warn('[tenzo] breakdown not saved', e); }
+}
+async function prunePrepCache(keep){
+  if (S.mode !== 'db'){ if (local.prepCache) { for (const k of Object.keys(local.prepCache.items)) if (!keep.has(k)) delete local.prepCache.items[k]; saveLocal(); } return; }
+  try {
+    const snap = await db.collection(PREP_CACHE).limit(1000).get();
+    for (const d of snap.docs) if (!keep.has(d.id)) await db.collection(PREP_CACHE).doc(d.id).delete();
+  } catch (e){ /* old breakdowns only take space */ }
+}
+// The saved schedule names each dish once and lists tasks as short arrays, to stay well under the size limit
+function packSchedule(sched){
+  const dishes = [], idx = new Map();
+  const di = t => { const k = t.dish + '|' + (t.for || []).join(', '); if (!idx.has(k)){ idx.set(k, dishes.length); dishes.push([t.dish, (t.for || []).join(', ')]); } return idx.get(k); };
+  return {...sched, dishes, days: sched.days.map(d => ({day: d.day, windows: Object.fromEntries(Object.entries(d.windows).map(([k, ts]) => [k, ts.map(t => [t.task, di(t), t.minutes || 0, t.wait || 0, t.main ? 1 : 0])]))}))};
+}
+function unpackSchedule(ps){
+  if (!ps || !Array.isArray(ps.dishes)) return ps;
+  return {...ps, days: (ps.days || []).map(d => ({day: d.day, windows: Object.fromEntries(Object.entries(d.windows || {}).map(([k, ts]) => [k, ts.map(t => {
+    const dish = ps.dishes[t[1]] || ['', ''];
+    return {task: t[0], dish: dish[0], for: dish[1] ? dish[1].split(', ') : [], minutes: t[2] || null, wait: t[3] || null, main: (ps.v || 0) >= 4 && !!t[4]};
+  })]))}))};
+}
+let prepCtl = null;
+async function generatePrep(fresh){
+  if (!sampleCap || !S.canPlan || S.prepBusy) return;
+  const menu = prepInputText();
+  if (!menu){ toast('Put recipes on the meal plan first.'); return; }
+  const sig = hashStr(menu);
+  const jobs = prepJobs();
+  prepCtl = new AbortController();
+  const signal = prepCtl.signal;
+  const status = t => { S.prepStatus = t; const el = $('#prepStatus'); if (el) el.textContent = t; };
+  S.prepBusy = true; S.prepStatus = 'Getting ready…'; renderAll();
+  const cache = fresh ? {} : await loadPrepCache();
+  // Ask about each distinct dish once, a day's worth at a time, in groups small enough for a complete answer
+  const todo = [], seen = new Set();
+  for (const j of jobs.slice().sort((a, b) => serveAbs(a) - serveAbs(b))) if (!cache[j.hash] && !seen.has(j.hash)){ seen.add(j.hash); todo.push(j); }
+  const groups = [];
+  for (const j of todo){
+    const g = groups[groups.length - 1];
+    if (g && g.length < 4 && g[0].di === j.di) g.push(j); else groups.push([j]);
+  }
+  const notes = [], failed = new Set(), working = new Set();
+  let done = 0, groupsDone = 0, fatal = null;
+  const t0 = Date.now();
+  const progress = () => {
+    if (fatal) return;
+    const left = groups.length - groupsDone;
+    const eta = groupsDone ? Math.ceil((Date.now() - t0) / groupsDone * left / 60000) : null;
+    status(`Breaking down dishes: ${done} of ${todo.length} done${working.size ? ` · now: ${[...working].join(', ')}` : ''}${eta ? ` · about ${eta} min left` : ''}`);
+  };
+  if (groups.length) progress(); else status('Placing tasks…');
+  const runGroup = async g => {
+    g.forEach(j => working.add(j.name)); progress();
+    try {
+      const data = await sampleCap.json(breakdownPrompt(g), {signal, cache: false});
+      const byId = new Map((data && Array.isArray(data.items) ? data.items : []).map(it => [String(it.id), it]));
+      for (const j of g){
+        const tasks = cleanTasks(byId.get(j.hash) && byId.get(j.hash).tasks);
+        if (tasks.length){ cache[j.hash] = {v: PREP_V, tasks, at: Date.now()}; await savePrepEntry(j.hash, cache[j.hash]); }
+        else failed.add(j.name);
+      }
+      for (const nt of (data && Array.isArray(data.notes) ? data.notes : [])) if (nt && notes.length < 8) notes.push(String(nt).slice(0, 300));
+    } catch (e){
+      const code = e && e.code;
+      if (['cancelled', 'not_granted', 'sampling_disabled', 'rate_limited', 'session_expired'].includes(code)) fatal = fatal || code;
+      for (const j of g) failed.add(j.name);
+    }
+    g.forEach(j => working.delete(j.name));
+    done += g.length; groupsDone++;
+    progress();
+  };
+  // two requests at a time
+  let next = 0;
+  await Promise.all([0, 1].map(async () => { while (next < groups.length && !fatal){ const g = groups[next++]; await runGroup(g); } }));
+  if (fatal){
+    const kept = jobs.filter(j => cache[j.hash]).length;
+    toast({cancelled: `Stopped. ${kept} of ${jobs.length} breakdowns are saved, and Regenerate continues from there.`,
+      not_granted: 'Claude access was not allowed for this page.', sampling_disabled: 'Claude is not available for this account.',
+      rate_limited: 'Claude is busy right now. Finished dishes are saved; try again in a minute.', session_expired: 'Sign in to claude.ai again, then retry. Finished dishes are saved.'}[fatal]);
+    S.prepBusy = false; prepCtl = null; renderAll();
+    return;
+  }
+  status('Placing tasks…');
+  const tasksByHash = Object.fromEntries(Object.entries(cache).map(([k, v]) => [k, v.tasks]));
+  const placed = placePrepTasks(jobs.filter(j => tasksByHash[j.hash]), tasksByHash);
+  const days = [];
+  for (const pd of PREP_DAYS){
+    const windows = Object.fromEntries(PREP_WINDOW_KEYS.map(k => [k, []]));
+    for (const t of placed.filter(x => x.di === pd.off)) windows[PREP_WINDOW_KEYS[t.w]].push(t);
+    for (const k of PREP_WINDOW_KEYS) windows[k] = windows[k].sort((a, b) => a.order - b.order).map(({di, w, order, ...t}) => t);
+    if (PREP_WINDOW_KEYS.some(k => windows[k].length)) days.push({day: pd.k, windows});
+  }
+  if (!days.length){
+    toast('Could not break down the dishes. Check that recipes have their method written in, then try again.');
+    S.prepBusy = false; prepCtl = null; renderAll();
+    return;
+  }
+  const sched = packSchedule({v: PREP_V, days, notes: [...new Set(notes)].slice(0, 6), missing: [...failed], sig, generatedAt: Date.now()});
+  S.prepSched = sched;
+  if (!failed.size) prunePrepCache(new Set(jobs.map(j => j.hash)));
+  try {
+    if (S.mode === 'db') await db.doc('plan/prep').set(JSON.parse(JSON.stringify(sched)));
+    else saveLocal();
+    toast(failed.size ? 'Prep schedule made, with some dishes missing. Regenerate to retry them.' : 'Prep schedule ready.');
+  } catch (e){ toast('The schedule is shown but could not be saved. It may be too large; check your connection.'); }
+  finally { S.prepBusy = false; prepCtl = null; renderAll(); }
+}
+function prepDayDateText(pd){ const dt = dayDate(pd.off); return dt ? fmtDate(dt, {weekday:'short', month:'short', day:'numeric'}) : ''; }
+// Rendering hands each task an id; drag, remove and add read the schedule back through this index
+let psIndex = new Map();
+function prepScheduleHtml(){
+  const ps = unpackSchedule(S.prepSched);
+  if (!ps || !ps.days) return '';
+  const edit = S.canPlan && !S.prepBusy;
+  psIndex = new Map();
+  return PREP_DAYS.map(pd => {
+    const d = ps.days.find(x => x.day === pd.k) || {day: pd.k, windows: {}};
+    const any = WINDOWS.some(w => (d.windows[w.k] || []).length);
+    if (!any && !edit) return '';
+    const dayMins = WINDOWS.reduce((a, w) => a + (d.windows[w.k] || []).reduce((b, t) => b + (t.minutes || 0), 0), 0);
+    return `<div class="ps-day"><h3>${esc(pd.full)} <span>${esc(prepDayDateText(pd))}${dayMins ? ' · about ' + esc(fmtMinutes(dayMins)) + ' hands-on' : ''}</span></h3><div class="ps-wins">${WINDOWS.map(w => {
+      const ts = d.windows[w.k] || [];
+      const mins = ts.reduce((a, t) => a + (t.minutes || 0), 0);
+      const slot = pd.k + '|' + w.k;
+      return `<div class="ps-win ${ts.length ? '' : 'empty'}"><h4>${w.l}${mins ? `<span>≈ ${esc(fmtMinutes(mins))}</span>` : ''}</h4>
+        <ul class="ps-list" data-slot="${esc(slot)}">${ts.map((t, i) => {
+          const tid = slot + '|' + i; psIndex.set(tid, t);
+          return `<li data-tid="${esc(tid)}" class="${t.main ? 'main' : ''} ${edit ? 'drag' : ''}"><span class="tk">${esc(t.task)}</span>
+          <span class="tmeta">${t.main ? '<span class="tag-main">main</span> ' : ''}${t.dish ? `${esc(t.dish)} · ` : ''}${(t.for || []).length ? `<span class="for">${esc(t.for.join(', '))}</span>` : ''}${t.minutes ? `${t.dish || (t.for || []).length ? ' · ' : ''}<span class="min">${esc(fmtMinutes(t.minutes))}</span>` : ''}${t.wait ? ` <span class="min">+ ${esc(fmtMinutes(t.wait))} unattended</span>` : ''}</span>
+          ${edit ? `<button type="button" class="x" data-act="ps-del" aria-label="Remove task">×</button>` : ''}</li>`;
+        }).join('')}</ul>
+        ${edit ? (S.psAdding === slot ? `<form class="ps-addform" data-slot="${esc(slot)}">
+            <input type="text" id="psNewText" placeholder="What needs doing" aria-label="New task" required>
+            <div class="row"><input type="number" id="psNewMin" min="0" step="5" placeholder="min" aria-label="Hands-on minutes"><button type="submit" class="btn primary">Add</button><button type="button" class="btn ghost" data-act="ps-add-cancel">Cancel</button></div>
+          </form>` : `<button type="button" class="ps-add" data-act="ps-add" data-slot="${esc(slot)}">+ Add task</button>`) : (ts.length ? '' : '<span class="note">Nothing</span>')}
+      </div>`;
+    }).join('')}</div></div>`;
+  }).join('');
+}
+// Save the edited schedule: one write at a time, the latest state wins
+let psSaving = false, psPending = false;
+async function savePrepDoc(){
+  if (psSaving){ psPending = true; return; }
+  psSaving = true;
+  try {
+    if (S.mode === 'db') await db.doc('plan/prep').set(JSON.parse(JSON.stringify(S.prepSched)));
+    else saveLocal();
+  } catch (e){ toast('Could not save that change to the schedule. Check your connection.'); }
+  finally { psSaving = false; if (psPending){ psPending = false; savePrepDoc(); } }
+}
+function commitSchedule(mutate){
+  const ps = unpackSchedule(S.prepSched);
+  const days = PREP_DAYS.map(pd => {
+    const d = ps.days.find(x => x.day === pd.k);
+    return {day: pd.k, windows: Object.fromEntries(PREP_WINDOW_KEYS.map(k => [k, ((d && d.windows[k]) || []).slice()]))};
+  });
+  mutate(days);
+  S.prepSched = packSchedule({...ps, edited: true, days: days.filter(d => PREP_WINDOW_KEYS.some(k => d.windows[k].length))});
+  savePrepDoc(); renderAll();
+}
+function onPsDragEnd(){
+  dragging = false; lastDragEnd = Date.now();
+  const lists = $$('#tab-prep .ps-list');
+  commitSchedule(days => {
+    for (const d of days) for (const k of PREP_WINDOW_KEYS) d.windows[k] = [];
+    for (const ul of lists){
+      const [day, win] = ul.dataset.slot.split('|');
+      const d = days.find(x => x.day === day);
+      if (d) d.windows[win] = [...ul.children].map(li => psIndex.get(li.dataset.tid)).filter(Boolean);
+    }
+  });
+}
+function armConfirm(btn, label, run){
+  if (btn.classList.contains('armed')){ run(); return; }
+  btn.classList.add('armed', 'danger'); const old = btn.textContent; btn.textContent = label;
+  setTimeout(() => { if (btn.isConnected){ btn.classList.remove('armed', 'danger'); btn.textContent = old; } }, 4000);
+}
+function prepSectionHtml(){
+  const ps = unpackSchedule(S.prepSched);
+  const menu = prepInputText();
+  const stale = ps && menu && ps.sig !== hashStr(menu);
+  const canGen = S.canPlan && S.canImport;
+  return `<section class="ps" aria-labelledby="psTitle">
+    <div class="ps-head">
+      <div><h2 id="psTitle">Prep schedule</h2>
+      <p class="note">A draft from Claude: for each dish and make-ahead batch, a brief note of what to prep ahead and the main cooking, with time estimates. The recipe has the details. Drag tasks to another window or day, add your own, or remove them. Starts with Sunday and Monday before the retreat.</p></div>
+      <div class="toolbar no-print">
+        ${S.prepBusy ? `<span class="ps-status" id="prepStatus">${esc(S.prepStatus)}</span><button type="button" class="btn" data-act="prep-stop">Stop</button>`
+          : canGen ? `<button type="button" class="btn ${ps ? '' : 'primary'}" data-act="prep-gen" ${menu ? '' : 'disabled'} title="${ps ? 'Only dishes that changed are sent to Claude again' : ''}">${ps ? 'Regenerate' : 'Make prep schedule'}</button>${ps ? `<button type="button" class="btn ghost" data-act="prep-gen-fresh" title="Ask Claude about every dish again, ignoring saved breakdowns">Redo every dish</button>` : ''}` : ''}
+        ${ps && S.canDownload ? `<button type="button" class="btn" data-act="dl-sched">Download schedule</button>` : ''}
+      </div>
+    </div>
+    ${stale ? `<div class="g-warn">The meal plan or recipes changed since this schedule was made${S.canPlan ? '. Regenerate it to catch up.' : '. Ask the tenzo to regenerate it.'}</div>` : ''}
+    ${ps && ps.v !== PREP_V ? `<div class="g-warn">This schedule was made with an older version of the page. ${S.canPlan ? 'Regenerate it for the new draft: a few prep-ahead tasks and the main cooking for each dish.' : 'Ask the tenzo to regenerate it.'}</div>` : ''}
+    ${ps && ps.missing && ps.missing.length ? `<div class="g-warn">These couldn't be broken down and are missing: ${esc(ps.missing.join(', '))}. ${S.canPlan ? 'Regenerate to try them again.' : ''}</div>` : ''}
+    ${ps ? prepScheduleHtml() + (ps.notes && ps.notes.length ? `<ul class="ps-notes">${ps.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : '') + `<p class="note">Drafted ${esc(whenText(ps.generatedAt))}${ps.edited ? ', then edited by hand' : ''}.</p>`
+      : `<p class="note">${!menu ? 'Put recipes on the meal plan first.' : canGen ? 'Claude drafts a few prep-ahead tasks and the main cooking for each planned dish, and the page places each one where it stays fresh. Then adjust it by hand.' : S.canPlan ? 'Making a schedule works when this page is opened on claude.ai.' : 'The tenzo has not made a prep schedule yet.'}</p>`}
+  </section>`;
+}
+const psSortables = [];
+function renderPrep(panel){
+  psSortables.splice(0).forEach(x => x.destroy());
+  const {days, maPlan} = prepModel();
+  panel.innerHTML = `
+    <div class="g-head">
+      <div><h2>Menu &amp; prep</h2><p class="g-stats">${esc(retreatRange())} · each recipe scaled to its meal's headcount, without the shopping buffer</p></div>
+      <div class="toolbar no-print">${S.canDownload ? `<button type="button" class="btn primary" data-act="dl-prep">Download printable sheets</button>` : ''}</div>
+    </div>
+    <div class="menu-table-wrap">${menuTableHtml()}</div>
+    ${alwaysListHtml()}
+    ${prepSectionHtml()}
+    ${days.map(({bd, meals, batches}) => `
+      <div class="prep-day"><h2>${esc(dayTitle(bd))}</h2>
+      ${batches.length ? `<div class="prep-meal"><h3>Make-ahead</h3><div class="prep-recipes">${batches.map(b => `
+        <div class="prep-r prep-ma ${b.warnings.length ? 'warn' : ''}"><h4><span class="tag-ma">Make-ahead</span> ${esc(b.ma.name)}</h4><div class="scale">${esc(batchSummary(b))}</div>
+        ${b.warnings.map(w => `<div class="scale ma-w">⚠ ${esc(w)}</div>`).join('')}
+        ${b.need ? `<ul>${batchIngs(b, maPlan).map(x => `<li><span class="qty">${esc(x.amt)}</span><span>${x.ma ? `<b>${esc(x.item)}</b>` : esc(x.item)}${x.note ? `, <span class="note">${esc(x.note)}</span>` : ''}</span></li>`).join('')}</ul>
+        ${b.ma.steps ? `<p class="steps">${esc(b.ma.steps)}</p>` : ''}` : ''}</div>`).join('')}</div></div>` : ''}
+      ${meals.map(({m, key, hc, recipes}) => `<div class="prep-meal"><h3>${m.l} <span class="hcn">· ${hc} people</span></h3>
+        ${recipes.length ? `<div class="prep-recipes">${recipes.map(r => {
+          const f = hc / (Number(r.yields) || 1);
+          return `<div class="prep-r"><h4>${esc(r.name)}</h4><div class="scale">×${esc(+f.toFixed(2))} of the recipe as written (serves ${esc(r.yields)})</div>
+          <ul>${dishIngs(r, hc, key, maPlan).map(x => `<li><span class="qty">${esc(x.amt)}</span><span>${x.ma ? `<b>${esc(x.item)}</b>` : esc(x.item)}${x.note ? `, <span class="note">${esc(x.note)}</span>` : ''}</span></li>`).join('')}</ul>
+          ${r.steps ? `<p class="steps">${esc(r.steps)}</p>` : ''}</div>`; }).join('')}</div>` : '<p class="note">Nothing planned.</p>'}
+      </div>`).join('')}</div>`).join('')}`;
+  if (S.canPlan && !S.prepBusy && typeof Sortable !== 'undefined') $$('.ps-list', panel).forEach(ul => psSortables.push(Sortable.create(ul, {
+    group: 'ps-tasks', animation: REDUCED ? 0 : 120, delay: 120, delayOnTouchOnly: true, filter: '.x', preventOnFilter: false,
+    onStart: () => { dragging = true; }, onEnd: onPsDragEnd})));
+}
+
+// ---------- printable files ----------
+const PRINT_CSS = `
+@page{size:letter;margin:13mm 12mm}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{font:10pt/1.4 "Helvetica Neue",Helvetica,Arial,sans-serif;color:#111;margin:0;padding:18px}
+h1{font:700 20pt/1.1 Georgia,"Times New Roman",serif;margin:0 0 2px}
+h2{font:700 13pt/1.2 Georgia,serif;margin:0 0 4px;border-bottom:1.2pt solid #111;padding-bottom:2px}
+h3{font:700 11pt/1.2 Georgia,serif;margin:10px 0 4px}
+.meta{color:#444;margin:0 0 4px}
+.legend{color:#555;font-size:8.5pt;margin:0 0 12px}
+.cols{columns:2;column-gap:9mm}
+.sec{break-inside:avoid-column;margin-bottom:12px}
+.sec h2{break-after:avoid}
+ul{list-style:none;margin:0;padding:0}
+li.g{display:grid;grid-template-columns:12px 1fr;gap:7px;padding:3.5px 0;border-bottom:.5pt solid #bbb;break-inside:avoid}
+.box{width:10px;height:10px;border:1pt solid #111;margin-top:2px}
+.top{display:flex;justify-content:space-between;gap:8px}
+.it{font-weight:700}
+.q{font-family:"Menlo","Courier New",monospace;font-weight:700;white-space:nowrap}
+.u{font-size:8.5pt;color:#444}
+.u b{font-family:"Menlo","Courier New",monospace;font-weight:400}
+.pan{font-size:8.5pt;color:#333;font-style:italic}
+li.covered .it,li.covered .q{text-decoration:line-through;color:#777}
+table{border-collapse:collapse;width:100%;font-size:8.5pt;margin-bottom:10px}
+th,td{border:.6pt solid #999;padding:3px 5px;vertical-align:top;text-align:left}
+th{font-family:Georgia,serif;font-size:10pt}
+td.off{background:#eee;color:#888}
+.hcn{color:#666;font-size:7.5pt}
+.day{break-before:page}
+.r{border:.6pt solid #999;padding:6px 8px;margin-bottom:8px;break-inside:avoid}
+.r h4{margin:0;font-size:10.5pt}
+.r .s{color:#555;font-size:8.5pt;margin-bottom:3px}
+.r li{display:grid;grid-template-columns:80px 1fr;gap:6px;border-bottom:.4pt dotted #bbb;padding:1px 0}
+.r .steps{white-space:pre-wrap;font-size:9pt;margin:5px 0 0}
+.psd{break-inside:avoid;margin:0 0 10px}
+.psd h3{margin:8px 0 4px}
+.psw{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.psw > div{border:.6pt solid #999;padding:4px 6px;font-size:8.5pt}
+.psw h5{margin:0 0 3px;font-size:7.5pt;text-transform:uppercase;letter-spacing:.05em;color:#444}
+.psw li{padding:1.5px 0;border-bottom:.4pt dotted #bbb}
+.psw .f{font-family:"Menlo","Courier New",monospace;font-size:7.5pt;color:#333}
+.awp{columns:2;column-gap:9mm;margin-bottom:10px}
+.awp li{display:flex;justify-content:space-between;gap:8px;border-bottom:.4pt dotted #bbb;padding:2px 0;break-inside:avoid}
+.awp .qty{font-family:"Menlo","Courier New",monospace;white-space:nowrap}
+.bar{position:fixed;top:10px;right:10px}
+.bar button{font:inherit;padding:6px 14px;cursor:pointer}
+@media print{.bar{display:none}body{padding:0}}
+`;
+function printDoc(title, inner){
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${PRINT_CSS}</style></head><body><div class="bar"><button onclick="print()">Print</button></div>${inner}<script>window.addEventListener('load',function(){setTimeout(function(){window.print()},350)})<\/script></body></html>`;
+}
+function groceryPrintHtml(){
+  const g = groceryModel();
+  let h = `<h1>Grocery list</h1><p class="meta">${esc(retreatRange())} · ${esc(groceryStatsText(g))}</p>
+    <p class="legend">Meal codes: B breakfast · L lunch · D dinner · T treat. "Make-ahead" lines are for batches such as stocks and pastes, with the day each is made. Amounts are rounded up.${g.stats.emptyMeals.length ? ' Meals with nothing planned: ' + esc(g.stats.emptyMeals.join(', ')) + '.' : ''}</p><div class="cols">`;
+  for (const s of g.sections){
+    const es = s.entries.filter(e => !(S.hideCovered && e.covered));
+    if (!es.length) continue;
+    h += `<div class="sec"><h2>${esc(s.name)}</h2><ul>`;
+    for (const e of es){
+      const pan = !e.have ? '' : e.covered ? `Covered by pantry (${esc(fmtAmount(e.have, 'near') || 'some')})` :
+        e.unmatched ? `Pantry has ${esc(fmtAmount(e.have, 'near'))}, check by hand` : `Pantry has ${esc(fmtAmount(e.have, 'near'))}; total ${esc(entryQtyText(e, 'total'))}`;
+      h += `<li class="g ${e.covered ? 'covered' : ''}"><span class="box"></span><div>
+        <div class="top"><span class="it">${esc(displayItem(e.item))}</span><span class="q">${esc(e.covered ? entryQtyText(e, 'total') : entryQtyText(e, 'need'))}</span></div>
+        <div class="u">${e.uses.map(u => `${esc(u.name)} <b>(${esc(u.codes.join(', '))})</b>`).join(' · ')}${e.aka.length ? ` · <i>also listed as ${esc(e.aka.join(', '))}</i>` : ''}</div>
+        ${pan ? `<div class="pan">${pan}</div>` : ''}</div></li>`;
+    }
+    h += `</ul></div>`;
+  }
+  return printDoc('Grocery list', h + `</div>`);
+}
+function schedulePrintInner(){
+  const ps = unpackSchedule(S.prepSched);
+  if (!ps || !ps.days || !ps.days.length) return '';
+  let h = `<h2>Prep schedule</h2><p class="legend">Prep-ahead tasks and the main cooking (in bold) for each dish. Meal codes: B breakfast · L lunch · D dinner · T treat. Times are hands-on minutes.</p>`;
+  for (const d of ps.days){
+    const pd = PREP_DAYS.find(p => p.k === d.day);
+    if (!pd) continue;
+    h += `<div class="psd"><h3>${esc(pd.full)}${prepDayDateText(pd) ? ' · ' + esc(prepDayDateText(pd)) : ''}</h3><div class="psw">` + WINDOWS.map(w => {
+      const ts = d.windows[w.k] || [];
+      const mins = ts.reduce((a, t) => a + (t.minutes || 0), 0);
+      return `<div><h5>${w.l}${mins ? ' · ≈ ' + esc(fmtMinutes(mins)) : ''}</h5><ul>${ts.map(t => `<li><span class="box" style="display:inline-block;vertical-align:-1px;margin-right:4px;width:8px;height:8px"></span>${t.main ? '<b>' + esc(t.task) + '</b>' : esc(t.task)} <span class="f">${t.dish ? esc(t.dish) + ' · ' : ''}${esc((t.for || []).join(', '))}${t.minutes ? ' · ' + esc(fmtMinutes(t.minutes)) : ''}</span></li>`).join('') || '<li>—</li>'}</ul></div>`;
+    }).join('') + `</div></div>`;
+  }
+  if (ps.notes && ps.notes.length) h += `<ul class="meta">${ps.notes.map(n => `<li>• ${esc(n)}</li>`).join('')}</ul>`;
+  return h;
+}
+function schedulePrintHtml(){
+  return printDoc('Prep schedule', `<h1>Prep schedule</h1><p class="meta">${esc(retreatRange())}</p>` + schedulePrintInner().replace(/^<h2>Prep schedule<\/h2>/, ''));
+}
+function prepPrintHtml(){
+  let h = `<h1>Menu &amp; prep</h1><p class="meta">${esc(retreatRange())} · scaled to each meal's headcount (no shopping buffer)</p>` +
+    menuTableHtml().replace(/class="menu"/, '') + alwaysListHtml(true) + schedulePrintInner();
+  const {days, maPlan} = prepModel();
+  for (const {bd, meals, batches} of days){
+    h += `<div class="day"><h1>${esc(dayTitle(bd))}</h1>`;
+    if (batches.length){
+      h += `<h3>Make-ahead</h3>`;
+      for (const b of batches){
+        h += `<div class="r"><h4>${esc(b.ma.name)} (make-ahead)</h4><div class="s">${esc(batchSummary(b))}</div>` +
+          b.warnings.map(w => `<div class="s">⚠ ${esc(w)}</div>`).join('') +
+          (b.need ? `<ul>` + batchIngs(b, maPlan).map(x => `<li><b class="q">${esc(x.amt)}</b><span>${esc(x.item)}${x.note ? ', ' + esc(x.note) : ''}</span></li>`).join('') + `</ul>${b.ma.steps ? `<p class="steps">${esc(b.ma.steps)}</p>` : ''}` : '') + `</div>`;
+      }
+    }
+    for (const {m, key, hc, recipes} of meals){
+      h += `<h3>${m.l} · ${hc} people</h3>`;
+      if (!recipes.length){ h += `<p class="meta">Nothing planned.</p>`; continue; }
+      for (const r of recipes){
+        const f = hc / (Number(r.yields) || 1);
+        h += `<div class="r"><h4>${esc(r.name)}</h4><div class="s">×${esc(+f.toFixed(2))} of the recipe (serves ${esc(r.yields)} as written)</div><ul>` +
+          dishIngs(r, hc, key, maPlan).map(x => `<li><b class="q">${esc(x.amt)}</b><span>${esc(x.item)}${x.note ? ', ' + esc(x.note) : ''}</span></li>`).join('') +
+          `</ul>${r.steps ? `<p class="steps">${esc(r.steps)}</p>` : ''}</div>`;
+      }
+    }
+    h += `</div>`;
+  }
+  return printDoc('Menu and prep', h);
+}
+async function offerFile(filename, html){
+  if (downloadsCap){
+    try { await downloadsCap.save({filename, data: html}); toast('Saved ' + filename + '. Open it to print.'); }
+    catch (e){ if (e && e.code !== 'declined') toast('Could not save the file here.'); }
+    return;
+  }
+  if (!window.claude){
+    const url = URL.createObjectURL(new Blob([html], {type:'text/html'}));
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    return;
+  }
+  toast('Saving files is not available in this view.');
+}
+function fileStamp(){ return S.plan.startDate ? '-' + S.plan.startDate : ''; }
+
+// ---------- recipe editor ----------
+let editingId = null, editingMeta = null;
+// The make-ahead an ingredient row refers to, if any (never the recipe being edited)
+function rowMakeAhead(itemText, prepId){
+  if (prepId && prepId !== editingId){ const r = S.recipes.get(prepId); if (isMakeAhead(r) && normItem(r.name) === normItem(itemText)) return r; }
+  const r = makeAheadIndex(S.recipes).get(normItem(itemText));
+  return r && r.id !== editingId ? r : null;
+}
+function markIngRow(row){
+  const ma = rowMakeAhead($('.i-item', row).value, row.dataset.prep);
+  row.classList.toggle('is-ma', !!ma);
+  const sel = $('.i-sec', row);
+  sel.disabled = !!ma || !S.canWrite;
+  const opt = $('option[value="__ma"]', sel);
+  if (ma){ if (!opt) sel.insertAdjacentHTML('afterbegin', '<option value="__ma">Make-ahead</option>'); sel.value = '__ma'; }
+  else if (opt){ opt.remove(); if (sel.value === '__ma' || !sel.value) sel.value = 'Other'; }
+  $('#rMaLegend').hidden = !$('#rIngs .ing-row.is-ma');
+}
+function setKindUI(kind){
+  $$('#recipeForm [data-for]').forEach(el => { el.hidden = el.dataset.for !== kind; });
+  $('#rKindDish').checked = kind !== 'makeahead'; $('#rKindMa').checked = kind === 'makeahead';
+}
+function ingRowHtml(i, idx){
+  const sec = i.section || 'Other';
+  return `<div class="ing-row" data-prep="${esc(i.prepId || '')}">
+    <input type="text" id="ri-${idx}-q" class="i-qty" value="${esc(qtyToText(i.qty))}" placeholder="1½" aria-label="Quantity">
+    <input type="text" id="ri-${idx}-u" class="i-unit" value="${esc(i.unit || '')}" list="unitList" placeholder="cup" aria-label="Unit">
+    <input type="text" id="ri-${idx}-i" class="i-item" value="${esc(i.item || '')}" list="itemList" placeholder="yellow onion" aria-label="Ingredient">
+    <select id="ri-${idx}-s" class="i-sec" aria-label="Store section">${SECTIONS.map(s => `<option ${s === sec ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
+    <input type="text" id="ri-${idx}-n" class="i-note" value="${esc(i.note || '')}" placeholder="diced" aria-label="Note">
+    <button type="button" class="x" aria-label="Remove ingredient">×</button>
+  </div>`;
+}
+let ingCounter = 0;
+function addIngRow(i){ $('#rIngs').insertAdjacentHTML('beforeend', ingRowHtml(i || {}, ingCounter++)); markIngRow($('#rIngs').lastElementChild); }
+function openRecipe(r, opts){
+  opts = opts || {};
+  editingId = r && r.id && !opts.asNew ? r.id : null;
+  editingMeta = r || {};
+  const readOnly = !S.canWrite;
+  $('#recipeDlgTitle').textContent = readOnly ? (r.name || 'Recipe') : editingId ? 'Edit recipe' : opts.imported ? 'Check imported recipe' : 'New recipe';
+  $('#rReview').hidden = !opts.imported;
+  $('#rReview').textContent = opts.imported ? 'Read by Claude. Check the amounts against the original before saving.' + (opts.estimated ? ' The serving count was not stated, so it is an estimate.' : '') : '';
+  $('#rName').value = (r && r.name) || '';
+  setKindUI(r && r.kind === 'makeahead' ? 'makeahead' : 'dish');
+  $('#rMakesQty').value = r && r.makes ? qtyToText(r.makes.qty) : '';
+  $('#rMakesUnit').value = (r && r.makes && r.makes.unit) || '';
+  $('#rKeeps').value = (r && r.keepsDays) || '';
+  $('#rYields').value = (r && r.yields) || '';
+  $('#rMeal').value = (r && r.mealType) || '';
+  $('#rSource').value = (r && r.source) || '';
+  $('#rSteps').value = (r && r.steps) || '';
+  $('#rIngs').innerHTML = ''; ingCounter = 0;
+  const ings = (r && r.ingredients && r.ingredients.length) ? r.ingredients : [{}, {}, {}];
+  ings.forEach(addIngRow);
+  $('#rMsg').textContent = '';
+  $$('#recipeForm input, #recipeForm select, #recipeForm textarea').forEach(el => { el.disabled = readOnly; });
+  $$('#rIngs .ing-row').forEach(markIngRow);
+  $('#rSave').hidden = readOnly; $('#rAddIng').hidden = readOnly;
+  $('#recipeDlg').showModal();
+  if (!readOnly && !opts.imported) setTimeout(() => $('#rName').focus(), 30);
+}
+async function saveRecipe(ev){
+  ev.preventDefault();
+  const name = $('#rName').value.trim();
+  const kind = $('#rKindMa').checked ? 'makeahead' : 'dish';
+  const yields = Number($('#rYields').value);
+  const makesQty = parseQty($('#rMakesQty').value), makesUnit = $('#rMakesUnit').value.trim();
+  const keeps = Math.round(Number($('#rKeeps').value)) || null;
+  if (!name){ $('#rMsg').textContent = 'Give the recipe a name.'; $('#rName').focus(); return; }
+  if (kind === 'dish' && !(yields > 0)){ $('#rMsg').textContent = 'Enter how many people the recipe serves as written.'; $('#rYields').focus(); return; }
+  if (kind === 'makeahead' && !(makesQty > 0 && makesUnit)){ $('#rMsg').textContent = 'Enter how much one batch makes, such as 8 cups.'; $('#rMakesQty').focus(); return; }
+  if (kind === 'makeahead'){
+    const clash = makeAheadIndex(S.recipes).get(normItem(name));
+    if (clash && clash.id !== editingId){ $('#rMsg').textContent = `There's already a make-ahead called ${clash.name}. Give this one a different name.`; $('#rName').focus(); return; }
+  }
+  const ingredients = $$('#rIngs .ing-row').map(row => {
+    const item = normItem($('.i-item', row).value);
+    if (!item) return null;
+    const qty = parseQty($('.i-qty', row).value);
+    const rawU = $('.i-unit', row).value.trim();
+    const ma = rowMakeAhead(item, row.dataset.prep);
+    const ing = {qty, unit: rawU ? normUnit(rawU) : (qty == null ? '' : 'each'), item, section: ma ? '' : $('.i-sec', row).value, note: $('.i-note', row).value.trim()};
+    if (ma) ing.prepId = ma.id;
+    return ing;
+  }).filter(Boolean);
+  if (!ingredients.length){ $('#rMsg').textContent = 'Add at least one ingredient.'; return; }
+  const id = editingId || newId('r');
+  const doc = {name, kind, yields: kind === 'dish' ? yields : null, mealType: kind === 'dish' ? $('#rMeal').value : '',
+    makes: kind === 'makeahead' ? {qty: makesQty, unit: normUnit(makesUnit)} : null, keepsDays: kind === 'makeahead' ? keeps : null,
+    source: $('#rSource').value.trim(), ingredients, steps: $('#rSteps').value.trim(),
+    createdAt: (editingId && editingMeta.createdAt) || Date.now(), updatedAt: Date.now(), updatedBy: S.me.id || null};
+  $('#rSave').disabled = true;
+  try { await writeDoc('recipes', id, doc); $('#recipeDlg').close(); toast('Saved ' + name + '.'); }
+  catch (e){ $('#rMsg').textContent = 'Not saved. Try again.'; }
+  finally { $('#rSave').disabled = false; }
+}
+
+// ---------- import ----------
+let impFiles = [], impCtl = null, impMode = 'photo';
+function setImpMode(m){
+  impMode = m;
+  $$('#impTabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+  $('#impPhoto').hidden = m !== 'photo'; $('#impText').hidden = m !== 'text'; $('#impWeb').hidden = m !== 'web';
+}
+function openImport(){
+  $('#impOcrNote').hidden = S.canImages;
+  impFiles.forEach(e => { if (e.url) URL.revokeObjectURL(e.url); });
+  impFiles = []; $('#impThumbs').innerHTML = ''; $('#impTextArea').value = ''; $('#impWebArea').value = ''; $('#impUrl').value = ''; $('#impMsg').textContent = '';
+  $('#impStatus').hidden = true; $('#impStop').hidden = true; $('#impGo').disabled = false;
+  setImpMode('photo');
+  $('#importDlg').showModal();
+}
+function fileKind(f){
+  const n = (f.name || '').toLowerCase();
+  if (f.type === 'application/pdf' || n.endsWith('.pdf')) return 'pdf';
+  if (/^image\//.test(f.type) || /\.(jpe?g|png|gif|webp|heic|heif|bmp|tiff?)$/.test(n)) return 'image';
+  return null;
+}
+// Photos are converted as soon as they're added, so a file the browser can't open is turned away right away and never lingers in the list
+async function addImpFiles(list){
+  const files = [...list];
+  const wrong = [], unreadable = [];
+  $('#impMsg').textContent = files.length ? 'Checking files…' : '';
+  for (const f of files){
+    const kind = fileKind(f);
+    if (!kind){ wrong.push(f.name); continue; }
+    if (kind === 'pdf'){ impFiles.push({kind, file:f}); continue; }
+    try { impFiles.push({kind, file:f, blob: await toJpeg(f)}); }
+    catch (e){
+      if (/^image\/(jpeg|png|webp|gif)$/.test(f.type)) impFiles.push({kind, file:f, blob:f});
+      else unreadable.push(f.name);
+    }
+  }
+  const msgs = [];
+  if (unreadable.length) msgs.push(`Could not open ${unreadable.join(', ')}. This browser can't read ${unreadable.length > 1 ? 'these photos' : 'that photo'}; iPhone HEIC photos often do this. Send ${unreadable.length > 1 ? 'them' : 'it'} as a JPEG or take a screenshot instead.`);
+  if (wrong.length) msgs.push(`Skipped ${wrong.join(', ')}. Use photos or PDFs.`);
+  $('#impMsg').textContent = msgs.join(' ');
+  renderImpThumbs();
+}
+function renderImpThumbs(){
+  const box = $('#impThumbs'); box.innerHTML = '';
+  impFiles.forEach((entry, idx) => {
+    const wrap = document.createElement('div'); wrap.className = 'thumb';
+    if (entry.kind === 'pdf'){
+      const d = document.createElement('div'); d.className = 'file-chip';
+      const b = document.createElement('b'); b.textContent = 'PDF';
+      const t = document.createElement('span'); t.textContent = entry.file.name;
+      d.append(b, t); wrap.appendChild(d);
+    } else {
+      const img = document.createElement('img'); img.alt = entry.file.name;
+      if (!entry.url) entry.url = URL.createObjectURL(entry.blob);
+      img.src = entry.url; wrap.appendChild(img);
+    }
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'thumb-x'; x.textContent = '×';
+    x.setAttribute('aria-label', 'Remove ' + entry.file.name);
+    x.addEventListener('click', () => { if (entry.url) URL.revokeObjectURL(entry.url); impFiles.splice(idx, 1); $('#impMsg').textContent = ''; renderImpThumbs(); });
+    wrap.appendChild(x); box.appendChild(wrap);
+  });
+}
+// Re-encode any photo as a JPEG of sensible size (also turns iPhone HEIC into something Claude accepts, where the browser can decode it)
+function toJpeg(file){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k));
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? resolve(b) : reject({code:'decode'}), 'image/jpeg', 0.88);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject({code:'decode', name:file.name}); };
+    img.src = url;
+  });
+}
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+function loadScript(src){
+  return new Promise((resolve, reject) => { const el = document.createElement('script'); el.src = src; el.onload = resolve; el.onerror = () => reject({code:'pdf_lib'}); document.head.appendChild(el); });
+}
+async function pdfLib(){
+  if (!window.pdfjsWorker) await loadScript(PDFJS + 'pdf.worker.min.js'); // runs pdf.js on the page itself; no separate worker needed
+  if (!window.pdfjsLib) await loadScript(PDFJS + 'pdf.min.js');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js';
+  return window.pdfjsLib;
+}
+// Returns the PDF's text when it has real text, otherwise page images
+async function readPdf(file, maxPages){
+  const lib = await pdfLib();
+  const doc = await lib.getDocument({data: new Uint8Array(await file.arrayBuffer()), isEvalSupported:false}).promise;
+  let text = '';
+  for (let i = 1; i <= Math.min(doc.numPages, 20); i++){
+    const tc = await (await doc.getPage(i)).getTextContent();
+    text += tc.items.map(it => it.str + (it.hasEOL ? '\n' : ' ')).join('') + '\n\n';
+  }
+  if (text.replace(/\s+/g, '').length > 150) return {text, images:[]};
+  const images = [];
+  for (let i = 1; i <= Math.min(doc.numPages, maxPages); i++){
+    const page = await doc.getPage(i);
+    const base = page.getViewport({scale:1});
+    const vp = page.getViewport({scale: Math.min(3, 1800 / Math.max(base.width, base.height))});
+    const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    await page.render({canvasContext: c.getContext('2d'), viewport: vp}).promise;
+    images.push(await new Promise(r => c.toBlob(r, 'image/jpeg', 0.88)));
+  }
+  return {text:'', images, pages: doc.numPages};
+}
+function importRules(){
+  const maNames = [...makeAheadIndex(S.recipes).keys()];
+  return `Extract the recipe as JSON with exactly this shape:
+{"name": string, "kind": "dish"|"makeahead", "yields": number|null, "yieldsEstimated": boolean, "makes": {"qty": number, "unit": string}|null, "keepsDays": number|null, "mealType": "breakfast"|"lunch"|"dinner"|"snack"|"", "source": string, "ingredients": [{"qty": number|null, "unit": string, "item": string, "section": string, "note": string}], "steps": string}
+Rules:
+- kind: "makeahead" when the recipe is a component made in a batch and used in other dishes, such as a stock, dashi, broth, paste, sauce, dressing, spice mix, pickle or dough. Otherwise "dish".
+- For a dish: yields is how many people it serves as written; if not stated, estimate it and set yieldsEstimated to true. makes and keepsDays are null.
+- For a make-ahead: makes is how much one batch makes as written, in the same units as its ingredients (for example {"qty": 8, "unit": "cup"}); estimate it if not stated. keepsDays is how many days it keeps refrigerated, or a sensible estimate. yields is null.${maNames.length ? `
+- The kitchen already makes these make-aheads: ${maNames.join(', ')}. When an ingredient is one of them, use exactly that name as the item.` : ''}
+- qty: a decimal number (1 1/2 becomes 1.5). For a range use the larger number. Use null when there is no amount, such as "salt to taste".
+- unit: one of tsp, tbsp, cup, fl oz, pint, quart, gallon, oz, lb, each, clove, can, bunch, head, block, package, pinch, slice, sprig, stalk, piece, jar, sheet, bag. Convert metric to US units (grams to oz or lb, ml to tsp, tbsp or cups). Use "each" for whole counted items, like 2 onions.
+- item: the ingredient as you would buy it, lowercase and singular, with no preparation words. Examples: "yellow onion", "soy sauce", "firm tofu", "carrot", "rolled oats". Put preparation and extra detail in note, such as "diced" or "divided".
+- section: one of ${SECTIONS.join(', ')}.
+- mealType: the meal it best suits, or "" if unclear. Use "snack" for sweets, cookies and treats.
+- source: the book, author or website if visible, otherwise "".
+- steps: the method as numbered steps, one per line.
+- If there is more than one recipe, extract only the main one.
+Reply with only the JSON.`;
+}
+// ---------- on-device text reader (for views that can't send images to Claude) ----------
+const OCR_CDN = 'https://cdn.jsdelivr.net/npm/';
+let ocrWorkerP = null, ocrLogger = () => {};
+function withTimeout(p, ms){ return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({code:'ocr_timeout'}), ms))]); }
+function getOcrWorker(){
+  if (ocrWorkerP) return ocrWorkerP;
+  ocrWorkerP = (async () => {
+    if (!window.Tesseract) await loadScript(OCR_CDN + 'tesseract.js@5.1.1/dist/tesseract.min.js');
+    const own = new URL('ocr', document.baseURI).href;
+    // Language data always comes from the files published with this page; the engine is tried from there first, then from the CDN
+    const configs = [
+      {workerPath: own + '/worker.min.js', corePath: own, langPath: own, workerBlobURL: false},
+      {workerPath: OCR_CDN + 'tesseract.js@5.1.1/dist/worker.min.js', corePath: OCR_CDN + 'tesseract.js-core@5.1.1', langPath: own, workerBlobURL: true}
+    ];
+    let lastErr;
+    for (const cfg of configs){
+      try { return await withTimeout(Tesseract.createWorker('eng', 1, {...cfg, gzip: false, cacheMethod: 'none', logger: m => ocrLogger(m), errorHandler: e => console.warn('[tenzo] OCR', e)}), 120000); }
+      catch (e){ lastErr = e; console.warn('[tenzo] OCR setup failed for', cfg.workerPath, e); }
+    }
+    throw lastErr || {code:'ocr_failed'};
+  })();
+  ocrWorkerP.catch(() => { ocrWorkerP = null; });
+  return ocrWorkerP;
+}
+async function ocrImages(blobs, status){
+  let label = 'the photo';
+  ocrLogger = m => {
+    if (m.status === 'recognizing text') status(`Reading the words in ${label}… ${Math.round((m.progress || 0) * 100)}%`);
+    else if (m.status) status('Loading the text reader. The first time takes a little while…');
+  };
+  status('Loading the text reader. The first time takes a little while…');
+  const w = await getOcrWorker();
+  const texts = [];
+  for (let i = 0; i < blobs.length; i++){
+    label = blobs.length > 1 ? `photo ${i + 1} of ${blobs.length}` : 'the photo';
+    const {data} = await w.recognize(blobs[i]);
+    texts.push(data.text || '');
+  }
+  return texts.join('\n\n--- next photo ---\n\n');
+}
+
+async function runImport(){
+  if (!sampleCap) return;
+  $('#impMsg').textContent = '';
+  let input, opts = {};
+  if (impMode === 'photo'){
+    if (!impFiles.length){ $('#impMsg').textContent = 'Choose at least one photo or PDF.'; return; }
+    $('#impStatus').hidden = false; $('#impStatus').textContent = 'Preparing files…'; $('#impGo').disabled = true;
+    const max = S.imgMax || 5;
+    let pdfText = '';
+    const blobs = [];
+    try {
+      for (const {kind, file, blob} of impFiles){
+        if (kind === 'pdf'){
+          const r = await readPdf(file, max);
+          if (r.text) pdfText += r.text; else blobs.push(...r.images);
+        } else blobs.push(blob);
+      }
+    } catch (e){
+      $('#impStatus').hidden = true; $('#impGo').disabled = false;
+      $('#impMsg').textContent = e && e.code === 'pdf_lib' ? 'Could not load the PDF reader. Check your connection and try again.'
+        : e && e.code === 'decode' ? `Could not open ${e.name || 'that file'}. If it's an iPhone HEIC photo, send it as a JPEG or take a screenshot of it.`
+        : 'Could not read that file. Try a photo or a different PDF.';
+      return;
+    }
+    if (blobs.length > max){ $('#impStatus').hidden = true; $('#impGo').disabled = false; $('#impMsg').textContent = `Use at most ${max} images or pages at a time.`; return; }
+    let ocrText = '';
+    if (blobs.length && !S.canImages){
+      try { ocrText = await ocrImages(blobs, t => { $('#impStatus').textContent = t; }); }
+      catch (e){
+        console.warn('[tenzo] OCR failed', e);
+        $('#impStatus').hidden = true; $('#impGo').disabled = false;
+        $('#impMsg').textContent = 'The text reader could not start in this view. Copy the text out of the photo and use "From text" instead.';
+        return;
+      }
+      if (ocrText.replace(/\s+/g, '').length < 40){
+        $('#impStatus').hidden = true; $('#impGo').disabled = false;
+        $('#impMsg').textContent = 'No readable text found in the photo. Try a sharp, straight-on photo in good light, or paste the text instead.';
+        return;
+      }
+      blobs.length = 0;
+    }
+    if (ocrText){
+      input = importRules() + `\n\nThe text below was read from photo${impFiles.length > 1 ? 's' : ''} of a recipe by an automatic text reader (OCR). Expect misread characters, broken or merged lines, and fractions read wrong (for example "1/2" read as "12" or "V2", "½" dropped, "l" for "1", "O" for "0"). Use cooking common sense to correct obvious errors, and don't invent ingredients that aren't there.` +
+        (pdfText ? '\n\nText from an attached PDF of the same recipe:\n' + pdfText.slice(0, 30000) : '') + '\n\nText read from the photo:\n' + ocrText.slice(0, 30000);
+    } else if (blobs.length){
+      input = `The attached image${blobs.length > 1 ? 's show pages of one recipe, in order' : ' shows a recipe'}. ` + importRules() +
+        (pdfText ? '\n\nText from an attached PDF of the same recipe:\n' + pdfText.slice(0, 30000) : '');
+      opts.images = blobs;
+    } else {
+      input = importRules() + '\n\nRecipe text (from a PDF):\n' + pdfText.slice(0, 30000);
+    }
+  } else if (impMode === 'web'){
+    const t = $('#impWebArea').value.trim();
+    const url = $('#impUrl').value.trim();
+    if (!t){ $('#impMsg').textContent = url ? "Claude can't open links from this page. Copy the page's contents and paste them in the box." : 'Paste the contents of the recipe page first.'; $('#impWebArea').focus(); return; }
+    input = importRules() + `\n\nThe text below was copied from a recipe web page${url ? ' (' + url + ')' : ''}. It may include menus, ads, a long story, reviews and comments: ignore all of that and extract only the recipe itself.` +
+      (url ? ` Set source to "${url.replace(/"/g, '')}".` : '') + '\n\nPage text:\n' + t.slice(0, 60000);
+  } else {
+    const t = $('#impTextArea').value.trim();
+    if (!t){ $('#impMsg').textContent = 'Paste the recipe text first.'; return; }
+    input = importRules() + '\n\nRecipe text:\n' + t.slice(0, 30000);
+  }
+  impCtl = new AbortController();
+  opts.signal = impCtl.signal;
+  opts.onText = () => { $('#impStatus').textContent = 'Reading the recipe…'; };
+  $('#impStatus').hidden = false; $('#impStatus').textContent = 'Thinking… This can take up to a minute.';
+  $('#impGo').disabled = true; $('#impStop').hidden = false;
+  let retryWithReader = false;
+  try {
+    const data = await sampleCap.json(input, opts);
+    if (!data || typeof data !== 'object' || !Array.isArray(data.ingredients)) throw {code:'invalid_json'};
+    const isMa = data.kind === 'makeahead';
+    const r = {
+      name: String(data.name || '').trim(), kind: isMa ? 'makeahead' : 'dish',
+      yields: !isMa && Number(data.yields) > 0 ? Math.round(Number(data.yields)) : '',
+      makes: isMa && data.makes && parseQty(data.makes.qty) ? {qty: parseQty(data.makes.qty), unit: normUnit(data.makes.unit)} : null,
+      keepsDays: isMa && Number(data.keepsDays) > 0 ? Math.round(Number(data.keepsDays)) : null,
+      mealType: ['breakfast','lunch','dinner','snack'].includes(data.mealType) ? data.mealType : '',
+      source: (impMode === 'web' && $('#impUrl').value.trim()) || String(data.source || ''), steps: String(data.steps || ''),
+      ingredients: data.ingredients.map(i => ({qty: parseQty(i.qty), unit: i.qty == null ? '' : normUnit(i.unit), item: normItem(i.item), section: SECTIONS.includes(i.section) ? i.section : (knownSection(i.item) || 'Other'), note: String(i.note || '')})).filter(i => i.item)
+    };
+    $('#importDlg').close();
+    openRecipe(r, {imported:true, estimated: !!data.yieldsEstimated});
+  } catch (e){
+    const code = e && e.code;
+    if (code === 'images_unavailable' && S.canImages){ S.canImages = false; retryWithReader = true; return; }
+    const msg = {
+      cancelled: '', not_granted: 'Claude access was not allowed for this page.', sampling_disabled: 'Claude is not available for this account.',
+      images_unavailable: 'This view cannot send photos to Claude. Copy the text out of the photo and use "From text" instead.', image_rejected: 'That photo could not be read. Try a JPEG or PNG under 20 MB.',
+      rate_limited: 'Too many requests right now. Try again in a minute.', refused: 'Claude could not read this recipe. Try a clearer photo or paste the text.',
+      invalid_json: 'The reply was not a readable recipe. Try again, or paste the text instead.', session_expired: 'Sign in to claude.ai again, then retry.'
+    }[code];
+    $('#impMsg').textContent = msg === undefined ? 'Something went wrong. Try again.' : msg;
+    if (code === 'not_granted' || code === 'sampling_disabled'){ S.canImport = false; requestRender(); }
+  } finally {
+    $('#impStatus').hidden = true; $('#impGo').disabled = false; $('#impStop').hidden = true; impCtl = null;
+    if (retryWithReader) setTimeout(runImport, 0);
+  }
+}
+
+// ---------- examples ----------
+const EXAMPLES = [
+  {name:'Example: Ginger congee', yields:8, mealType:'breakfast', source:'Example recipe', steps:'1. Rinse the rice.\n2. Simmer rice, water and ginger for 90 minutes, stirring now and then.\n3. Season with soy sauce and salt.\n4. Serve with scallion and a few drops of sesame oil.',
+   ingredients:[{qty:1.5,unit:'cup',item:'jasmine rice',section:'Grains & Dry Goods',note:'rinsed'},{qty:12,unit:'cup',item:'water',section:'Other',note:''},{qty:3,unit:'tbsp',item:'fresh ginger',section:'Produce',note:'minced'},{qty:1,unit:'bunch',item:'scallion',section:'Produce',note:'sliced'},{qty:3,unit:'tbsp',item:'soy sauce',section:'Oils & Condiments',note:''},{qty:1,unit:'tbsp',item:'toasted sesame oil',section:'Oils & Condiments',note:''},{qty:null,unit:'',item:'salt',section:'Spices & Seasonings',note:'to taste'}]},
+  {name:'Example: Miso soup with tofu', yields:8, mealType:'lunch', source:'Example recipe', steps:'1. Soak kombu in water for 30 minutes, then heat until just simmering and remove.\n2. Add wakame and tofu.\n3. Whisk miso with a ladle of broth and stir back in. Do not boil.\n4. Top with scallion.',
+   ingredients:[{qty:10,unit:'cup',item:'water',section:'Other',note:''},{qty:2,unit:'sheet',item:'kombu',section:'Canned & Jarred',note:''},{qty:0.75,unit:'cup',item:'white miso',section:'Tofu & Dairy',note:''},{qty:1,unit:'block',item:'firm tofu',section:'Tofu & Dairy',note:'cubed'},{qty:2,unit:'tbsp',item:'dried wakame',section:'Canned & Jarred',note:''},{qty:0.5,unit:'bunch',item:'scallion',section:'Produce',note:'sliced'}]},
+  {name:'Example: Oat and raisin cookies', yields:12, mealType:'snack', source:'Example recipe', steps:'1. Cream butter and brown sugar. Beat in eggs.\n2. Mix in flour, soda, cinnamon and salt, then oats and raisins.\n3. Scoop onto trays and bake at 350°F for 11 to 13 minutes.',
+   ingredients:[{qty:3,unit:'cup',item:'rolled oats',section:'Grains & Dry Goods',note:''},{qty:1.5,unit:'cup',item:'all-purpose flour',section:'Baking & Sweets',note:''},{qty:1,unit:'cup',item:'brown sugar',section:'Baking & Sweets',note:'packed'},{qty:1,unit:'cup',item:'butter',section:'Tofu & Dairy',note:'softened'},{qty:2,unit:'each',item:'egg',section:'Tofu & Dairy',note:''},{qty:1,unit:'cup',item:'raisin',section:'Baking & Sweets',note:''},{qty:1,unit:'tsp',item:'cinnamon',section:'Spices & Seasonings',note:''},{qty:1,unit:'tsp',item:'baking soda',section:'Baking & Sweets',note:''},{qty:0.5,unit:'tsp',item:'salt',section:'Spices & Seasonings',note:''}]}
+];
+async function addExamples(){
+  for (const r of EXAMPLES){
+    try { await writeDoc('recipes', newId('r'), {...r, createdAt:Date.now(), updatedAt:Date.now(), updatedBy:S.me.id || null}); } catch (e){ return; }
+  }
+  toast('Added 3 example recipes. Delete them whenever you like.');
+}
+
+// ---------- misc ----------
+let toastTimer = null;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3400); }
+function armDelete(btn, run){
+  if (btn.classList.contains('armed')){ run(); return; }
+  btn.classList.add('armed'); const old = btn.textContent; btn.textContent = 'Confirm delete';
+  setTimeout(() => { if (btn.isConnected){ btn.classList.remove('armed'); btn.textContent = old; } }, 3500);
+}
+
+function bindStatic(){
+  $$('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+  $('main').addEventListener('click', onMainClick);
+  $('main').addEventListener('change', onMainChange);
+  $('main').addEventListener('input', onMainInput);
+  $('main').addEventListener('submit', onMainSubmit);
+  $('main').addEventListener('toggle', e => { if (e.target.id === 'mergePanel') S.mergeOpen = e.target.open; }, true);
+  // dialogs
+  $$('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+  $('#recipeForm').addEventListener('submit', saveRecipe);
+  $('#rAddIng').addEventListener('click', () => { addIngRow({}); const rows = $$('#rIngs .ing-row'); $('.i-qty', rows[rows.length - 1]).focus(); });
+  $('#rIngs').addEventListener('click', e => { if (e.target.closest('.x')) e.target.closest('.ing-row').remove(); });
+  $('#rIngs').addEventListener('change', e => {
+    if (!e.target.classList.contains('i-item')) return;
+    const row = e.target.closest('.ing-row'), sel = $('.i-sec', row);
+    row.dataset.prep = '';
+    markIngRow(row);
+    const k = knownSection(e.target.value);
+    if (k && sel.value === 'Other') sel.value = k;
+  });
+  $('#rIngs').addEventListener('input', e => { if (e.target.classList.contains('i-item')){ const row = e.target.closest('.ing-row'); row.dataset.prep = ''; markIngRow(row); } });
+  $$('input[name="rKind"]').forEach(r => r.addEventListener('change', () => setKindUI($('#rKindMa').checked ? 'makeahead' : 'dish')));
+  $$('#impTabs button').forEach(b => b.addEventListener('click', () => setImpMode(b.dataset.mode)));
+  $('#impPick').addEventListener('click', () => $('#impFiles').click());
+  $('#impFiles').addEventListener('change', e => { addImpFiles(e.target.files); e.target.value = ''; });
+  $('#importDlg').addEventListener('paste', e => {
+    const files = [...((e.clipboardData && e.clipboardData.files) || [])];
+    if (!files.length) return;
+    e.preventDefault(); setImpMode('photo'); addImpFiles(files);
+  });
+  const drop = $('#impDrop');
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); addImpFiles(e.dataTransfer.files); });
+  $('#impGo').addEventListener('click', runImport);
+  $('#impStop').addEventListener('click', () => impCtl && impCtl.abort());
+  $('#importDlg').addEventListener('close', () => impCtl && impCtl.abort());
+  // Enter or Space on a focused recipe opens it, like a click
+  $('main').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target.closest && e.target.closest('#shelfList .shelf-item, #board .chip[data-rid]');
+    if (!el || e.target !== el) return;
+    e.preventDefault(); openFromPlan(el);
+  });
+}
+function onMainClick(e){
+  const t = e.target;
+  const act = t.closest('[data-act]');
+  if (act){
+    const a = act.dataset.act, id = act.dataset.id;
+    if (a === 'new') openRecipe(null);
+    else if (a === 'import') openImport();
+    else if (a === 'examples') addExamples();
+    else if (a === 'view') openRecipe(S.recipes.get(id));
+    else if (a === 'dup'){ const r = S.recipes.get(id); openRecipe({...r, name: r.name + ' (copy)'}, {asNew:true}); }
+    else if (a === 'del') armDelete(act, () => removeDoc('recipes', id).then(() => toast('Recipe deleted.')).catch(() => {}));
+    else if (a === 'pdel') armDelete(act, () => removeDoc('pantry', id).catch(() => {}));
+    else if (a === 'dl-grocery') offerFile('grocery-list' + fileStamp() + '.html', groceryPrintHtml());
+    else if (a === 'dl-prep') offerFile('menu-and-prep' + fileStamp() + '.html', prepPrintHtml());
+    else if (a === 'dl-sched') offerFile('prep-schedule' + fileStamp() + '.html', schedulePrintHtml());
+    else if (a === 'prep-gen' || a === 'prep-gen-fresh'){
+      const run = () => generatePrep(a === 'prep-gen-fresh');
+      const ps = unpackSchedule(S.prepSched);
+      if (ps && ps.edited) armConfirm(act, 'Replace my edits?', run); else run();
+    }
+    else if (a === 'ps-del' && S.canPlan){
+      const tid = act.closest('li').dataset.tid, [day, win, i] = tid.split('|');
+      commitSchedule(days => { days.find(d => d.day === day).windows[win].splice(Number(i), 1); });
+    }
+    else if (a === 'ps-add' && S.canPlan){ S.psAdding = act.dataset.slot; renderAll(); const el = $('#psNewText'); if (el) el.focus(); }
+    else if (a === 'ps-add-cancel'){ S.psAdding = null; renderAll(); }
+    else if (a === 'alias-undo' && S.canPlan){ const al = {...S.aliases}; delete al[act.dataset.from]; S.aliases = al; saveAliases(); renderAll(); }
+    else if (a === 'merge-find') findDuplicates();
+    else if (a === 'merge-one' && S.canPlan){ const x = (S.mergeSugg || [])[Number(act.dataset.i)]; if (x){ S.mergeSugg = S.mergeSugg.filter(y => y !== x); combineNames(x.same, x.name); } }
+    else if (a === 'merge-skip'){ S.mergeSugg = (S.mergeSugg || []).filter((_, i) => i !== Number(act.dataset.i)); renderAll(); }
+    else if (a === 'merge-all' && S.canPlan){ const sure = (S.mergeSugg || []).filter(x => x.sure); S.mergeSugg = S.mergeSugg.filter(x => !x.sure); for (const x of sure) combineNames(x.same, x.name); }
+    else if (a === 'aw-del' && S.canPlan){ S.plan.always.items = S.plan.always.items.filter(i => i.id !== id); schedulePlanSave(); renderAll(); }
+    else if (a === 'aw-sugg' && S.canPlan) addAlways(AW_SUGGESTIONS[Number(act.dataset.i)]);
+    else if (a === 'prep-stop'){ if (prepCtl) prepCtl.abort(); }
+    else if (a === 'copy-grocery'){
+      const txt = groceryText();
+      navigator.clipboard.writeText(txt).then(() => toast('Grocery list copied.'), () => toast('Copying is blocked here. Use the download instead.'));
+    }
+    return;
+  }
+  if (t.id === 'shelfNew'){ openRecipe(null); return; }
+  const mf = t.closest('.meal-filter button');
+  if (mf && mf.dataset.rkind != null){ S.recipeKind = mf.dataset.rkind; renderAll(); return; }
+  if (mf){ S.shelfMeal = mf.dataset.meal; renderAll(); return; }
+  if (S.canPlan){
+    const x = t.closest('.chip .x');
+    if (x){
+      const li = x.closest('.chip'), ul = li.closest('.slot-list');
+      if (ul.dataset.key) S.plan.slots[ul.dataset.key].recipeIds = S.plan.slots[ul.dataset.key].recipeIds.filter(id => id !== li.dataset.rid);
+      else S.plan.batches[ul.dataset.day] = S.plan.batches[ul.dataset.day].filter(id => id !== li.dataset.rid);
+      schedulePlanSave(); renderAll(); return;
+    }
+  }
+  // Clicking a recipe on the shelf or the board opens it. A click that ends a drag doesn't count.
+  const rec = t.closest('#shelfList .shelf-item, #board .chip[data-rid]');
+  if (rec && !t.closest('.x') && Date.now() - lastDragEnd > 350) openFromPlan(rec);
+}
+function openFromPlan(el){
+  const r = S.recipes.get(el.dataset.rid);
+  if (r) openRecipe(r);
+}
+function onMainChange(e){
+  const t = e.target;
+  if (t.dataset.en && S.canPlan){ S.plan.slots[t.dataset.en].enabled = t.checked; schedulePlanSave(); renderAll(); return; }
+  if (t.dataset.hc && S.canPlan){
+    const v = t.value.trim();
+    S.plan.slots[t.dataset.hc].headcount = v === '' ? null : Math.max(0, Math.round(Number(v)) || 0);
+    schedulePlanSave(); renderAll(); return;
+  }
+  if (t.id === 'setPeople' && S.canPlan){ S.plan.participants = Math.max(0, Math.round(Number(t.value)) || 0); schedulePlanSave(); renderAll(); return; }
+  if (t.id === 'setBuffer' && S.canPlan){ S.plan.bufferPct = Math.max(0, Number(t.value) || 0); schedulePlanSave(); renderAll(); return; }
+  if (t.id === 'setStart' && S.canPlan){ S.plan.startDate = t.value; schedulePlanSave(); renderAll(); return; }
+  if (t.id === 'awDays' && S.canPlan){ S.plan.always.days = Math.max(0, Number(t.value) || 0); schedulePlanSave(); renderAll(); return; }
+  const awRow = t.closest('tr[data-aw]');
+  if (awRow && t.dataset.f && S.canPlan){
+    const it = S.plan.always.items.find(i => i.id === awRow.dataset.aw);
+    if (!it) return;
+    const f = t.dataset.f;
+    if (f === 'qty') it.qty = parseQty(t.value);
+    else if (f === 'unit') it.unit = t.value.trim() ? normUnit(t.value) : '';
+    else if (f === 'item'){ const v = normItem(t.value); if (!v){ t.value = it.item; return; } it.item = v; }
+    else it[f] = t.value.trim();
+    schedulePlanSave(); renderAll(); return;
+  }
+  if (t.id === 'hideCovered'){ S.hideCovered = t.checked; const p = lsGet(LS_PREF) || {}; p.hideCovered = t.checked; lsSet(LS_PREF, p); renderAll(); return; }
+  if (t.dataset.bought){ if (t.checked) S.bought.add(t.dataset.bought); else S.bought.delete(t.dataset.bought); t.closest('.gl').classList.toggle('done', t.checked); return; }
+  const row = t.closest('tr[data-pid]');
+  if (row && t.dataset.f){
+    const p = {...S.pantry.get(row.dataset.pid)};
+    const f = t.dataset.f;
+    if (f === 'qty') p.qty = parseQty(t.value);
+    else if (f === 'unit') p.unit = t.value.trim() ? normUnit(t.value) : '';
+    else if (f === 'item'){ const v = normItem(t.value); if (!v){ t.value = p.item; return; } p.item = v; }
+    else p[f] = t.value.trim();
+    p.updatedAt = Date.now(); p.updatedBy = S.me.id || null;
+    writeDoc('pantry', p.id, p).catch(() => {});
+  }
+}
+function onMainInput(e){
+  const t = e.target;
+  if (t.id === 'paItem'){ const k = knownSection(t.value); if (k) $('#paSection').value = k; }
+  else if (t.id === 'awItem'){ const k = knownSection(t.value); if (k) $('#awSection').value = k; }
+  else if (t.id === 'shelfSearch'){ S.shelfQ = t.value; renderAll(); }
+  else if (t.id === 'recipeSearch'){ S.recipeQ = t.value; renderAll(); }
+}
+function onMainSubmit(e){
+  if (e.target.id === 'mergeForm'){
+    e.preventDefault();
+    if (!S.canPlan) return;
+    const from = normItem($('#mergeFrom').value), to = normItem($('#mergeTo').value);
+    if (!from || !to){ return; }
+    if (canonItem(from, S.aliases) === canonItem(to, S.aliases)){ toast('Those already count as the same ingredient.'); return; }
+    combineNames([from], to);
+    toast(`${displayItem(from)} now counts as ${canonItem(to, S.aliases)}.`);
+    return;
+  }
+  if (e.target.classList.contains('ps-addform')){
+    e.preventDefault();
+    if (!S.canPlan) return;
+    const text = $('#psNewText').value.trim();
+    if (!text){ $('#psNewText').focus(); return; }
+    const minutes = Math.max(0, Math.round(Number($('#psNewMin').value))) || null;
+    const [day, win] = e.target.dataset.slot.split('|');
+    S.psAdding = null;
+    commitSchedule(days => { days.find(d => d.day === day).windows[win].push({task: text, dish: '', for: [], minutes, wait: null, main: false}); });
+    return;
+  }
+  if (e.target.id === 'awAdd'){
+    e.preventDefault();
+    if (!S.canPlan) return;
+    const item = normItem($('#awItem').value);
+    if (!item){ $('#awItem').focus(); return; }
+    addAlways({item, qty: parseQty($('#awQty').value), unit: $('#awUnit').value.trim(), per: $('#awPer').value, section: $('#awSection').value});
+    const el = $('#awItem'); if (el) el.focus();
+    return;
+  }
+  if (e.target.id !== 'pantryAdd') return;
+  e.preventDefault();
+  const item = normItem($('#paItem').value);
+  if (!item){ $('#paItem').focus(); return; }
+  const rawU = $('#paUnit').value.trim();
+  const qty = parseQty($('#paQty').value);
+  const doc = {item, qty, unit: rawU ? normUnit(rawU) : (qty == null ? '' : 'each'), section: $('#paSection').value, note: $('#paNote').value.trim(), updatedAt: Date.now(), updatedBy: S.me.id || null};
+  writeDoc('pantry', newId('p'), doc).then(() => {
+    ['#paItem','#paQty','#paUnit','#paNote'].forEach(s => { const el = $(s); if (el) el.value = ''; });
+    const el = $('#paItem'); if (el) el.focus();
+  }).catch(() => {});
+}
+
+boot();
+</script>
